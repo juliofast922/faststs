@@ -1,0 +1,47 @@
+# Build artifacts
+*.o
+*.obj
+*.so
+*.a
+*.out
+*.exe
+*.dll
+
+# Executable binaries
+/bin/
+/build/
+/dist/
+/*.exe
+/*.out
+/*.elf
+
+# Core dumps and debugger files
+core
+*.core
+*.stackdump
+
+# Logs and temporary files
+*.log
+*.tmp
+
+# Editor/IDE files
+*~
+*.swp
+*.swo
+.DS_Store
+.vscode/
+.idea/
+*.user
+*.sublime*
+
+# Compiled test binaries
+/tests/*.out
+/tests/*.exe
+/tests/*.o
+/bin/tests/*
+
+# Configuration files
+config/secrets.conf
+
+# Auto-generated tags
+tags
