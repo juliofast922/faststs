@@ -1,7 +1,8 @@
 // src/main.c
 
 #include <stdio.h>
-#include "utils.h"
+#include "logger.h"
+#include "error.h"
 #include "models/user.h"
 #include "models/model.h"
 

@@ -1,11 +1,13 @@
 #include <stdio.h>
 #include <string.h>
 #include "models/user.h"
+#include "error.h"
 
-void test_user_all_fields(void);
-void test_user_missing_optional_fields(void);
-
-void test_user_all_fields(void) {
+/**
+ * @brief Tests deserialization of a full AWS User XML.
+ * @return 0 if passed, 1 if failed.
+ */
+int test_user_all_fields(void) {
     const char *xml =
         "<User>"
         "<UserId>AIDACKCEVSQ6C2EXAMPLE</UserId>"
@@ -17,10 +19,10 @@ void test_user_all_fields(void) {
         "</User>";
 
     User u = user_create();
-    u.vtable->deserialize_xml(&u, xml);
+    ErrorCode err = u.vtable->deserialize_xml(&u, xml);
 
     int passed = 1;
-
+    passed &= err == ERROR_NONE;
     passed &= strcmp(u.user_id, "AIDACKCEVSQ6C2EXAMPLE") == 0;
     passed &= strcmp(u.path, "/division_abc/subdivision_xyz/") == 0;
     passed &= strcmp(u.user_name, "Bob") == 0;
@@ -29,20 +31,21 @@ void test_user_all_fields(void) {
     passed &= u.has_password_last_used;
     passed &= strcmp(u.password_last_used, "2014-10-10T14:37:51Z") == 0;
 
-    if (passed)
+    if (passed) {
         printf("PASSED test_user_all_fields\n");
-    else {
+        return 0;
+    } else {
         printf("FAILED test_user_all_fields\n");
-        printf("user_id: %s\n", u.user_id);
-        printf("path: %s\n", u.path);
-        printf("user_name: %s\n", u.user_name);
-        printf("arn: %s\n", u.arn);
-        printf("create_date: %s\n", u.create_date);
-        printf("password_last_used: %s\n", u.has_password_last_used ? u.password_last_used : "<not defined>");
+        printf("Error code: %s\n", error_to_string(err));
+        return 1;
     }
 }
 
-void test_user_missing_optional_fields(void) {
+/**
+ * @brief Tests deserialization of a User XML with missing optional fields.
+ * @return 0 if passed, 1 if failed.
+ */
+int test_user_missing_optional_fields(void) {
     const char *xml =
         "<User>"
         "<UserId>UID123</UserId>"
@@ -53,10 +56,10 @@ void test_user_missing_optional_fields(void) {
         "</User>";
 
     User u = user_create();
-    u.vtable->deserialize_xml(&u, xml);
+    ErrorCode err = u.vtable->deserialize_xml(&u, xml);
 
     int passed = 1;
-
+    passed &= err == ERROR_NONE;
     passed &= strcmp(u.user_id, "UID123") == 0;
     passed &= strcmp(u.path, "/test/") == 0;
     passed &= strcmp(u.user_name, "Alice") == 0;
@@ -64,20 +67,19 @@ void test_user_missing_optional_fields(void) {
     passed &= strcmp(u.create_date, "2021-05-15T10:00:00Z") == 0;
     passed &= u.has_password_last_used == 0;
 
-    if (passed)
+    if (passed) {
         printf("PASSED test_user_missing_optional_fields\n");
-    else {
+        return 0;
+    } else {
         printf("FAILED test_user_missing_optional_fields\n");
-        printf("user_id: %s\n", u.user_id);
-        printf("path: %s\n", u.path);
-        printf("user_name: %s\n", u.user_name);
-        printf("arn: %s\n", u.arn);
-        printf("create_date: %s\n", u.create_date);
-        printf("password_last_used: %s\n", u.has_password_last_used ? u.password_last_used : "<not defined>");
+        printf("Error code: %s\n", error_to_string(err));
+        return 1;
     }
 }
 
-typedef void (*test_func_t)(void);
+// === Test runner ===
+
+typedef int (*test_func_t)(void);
 
 typedef struct {
     const char *name;
@@ -90,13 +92,18 @@ TestCase test_cases[] = {
     {NULL, NULL}
 };
 
+/**
+ * @brief Entry point for User model tests.
+ * @return 0 if all tests pass, 1 otherwise.
+ */
 int main(int argc, char *argv[]) {
+    int failed = 0;
+
     if (argc == 2) {
         const char *requested = argv[1];
         for (int i = 0; test_cases[i].name != NULL; i++) {
             if (strcmp(test_cases[i].name, requested) == 0) {
-                test_cases[i].func();
-                return 0;
+                return test_cases[i].func(); // retorna el resultado del test individual
             }
         }
         printf("Test not found: '%s'\n", requested);
@@ -104,8 +111,9 @@ int main(int argc, char *argv[]) {
     }
 
     for (int i = 0; test_cases[i].name != NULL; i++) {
-        test_cases[i].func();
+        if (test_cases[i].func() != 0)
+            failed = 1;
     }
 
-    return 0;
+    return failed;
 }

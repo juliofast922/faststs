@@ -1,3 +1,6 @@
+# Enviroment files
+*.env
+
 # Build artifacts
 *.o
 *.obj
@@ -23,6 +26,7 @@ core
 # Logs and temporary files
 *.log
 *.tmp
+/logs
 
 # Editor/IDE files
 *~
