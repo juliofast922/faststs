@@ -50,6 +50,14 @@ static LogLevel string_to_level(const char *lvl) {
  * @param env_path Path to the .env file.
  */
 void logger_init(const char *env_path) {
+    if (env_path == NULL) {
+        const char *env_level = getenv("LOG_LEVEL");
+        if (env_level != NULL) {
+            current_level = string_to_level(env_level);
+        }
+        return;
+    }
+
     FILE *env = fopen(env_path, "r");
     if (!env) return;
 
