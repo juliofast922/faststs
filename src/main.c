@@ -6,6 +6,7 @@
 #include "error.h"
 #include "utils.h"
 #include "test_utils.h"
+#include "http.h"
 
 #include "types/arn.h"
 

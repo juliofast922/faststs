@@ -1,7 +1,7 @@
 # Variables
 CC = gcc
 CFLAGS = -Wall -Wextra -Iinclude
-LDLIBS = -lssl -lcrypto
+LDLIBS = -lssl -lcrypto -lcurl
 SRC_DIR = src
 SRC = $(filter-out $(SRC_DIR)/main.c, $(wildcard $(SRC_DIR)/**/*.c) $(wildcard $(SRC_DIR)/*.c))
 BIN = bin/fasts3sts
