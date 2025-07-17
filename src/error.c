@@ -11,6 +11,8 @@ const char* error_to_string(ErrorCode code) {
             return "Missing required field in XML";
         case ERROR_DESERIALIZE_INVALID_FORMAT:
             return "Invalid XML format";
+        case ERROR_VALIDATION_FAILED:
+            return "Validation failed";
         case ERROR_UNKNOWN:
         default:
             return "Unknown error";

@@ -49,3 +49,7 @@ config/secrets.conf
 
 # Auto-generated tags
 tags
+
+# AWS
+/aws
+awscliv2.zip
