@@ -5,6 +5,7 @@
 #include <openssl/sha.h>
 
 #include "error.h"
+#include "logger.h"
 #include "aws/sigv4.h"
 
 // === Helpers ===
@@ -61,11 +62,14 @@ ErrorCode authorization_header_build(
     AuthorizationHeader *out_header
 ) {
     if (!creds || !amz_date || !date || !region || !service || !canonical_request || !out_header)
-    return ERROR_SIGV4_INVALID_INPUT;
+        return ERROR_SIGV4_INVALID_INPUT;
+
+    log_debug("CanonicalRequest:\n%s", canonical_request);
 
     // Step 1: Hash the canonical request
     char hashed_request[65];
     sha256_hex(canonical_request, hashed_request);
+    log_debug("Hashed CanonicalRequest: %s", hashed_request);
 
     // Step 2: Build the string to sign
     char scope[128];
@@ -75,6 +79,7 @@ ErrorCode authorization_header_build(
     snprintf(string_to_sign, sizeof(string_to_sign),
              "AWS4-HMAC-SHA256\n%s\n%s\n%s",
              amz_date, scope, hashed_request);
+    log_debug("StringToSign:\n%s", string_to_sign);
 
     // Step 3: Derive the signing key
     unsigned char signing_key[SHA256_DIGEST_LENGTH];
@@ -86,12 +91,14 @@ ErrorCode authorization_header_build(
 
     char signature_hex[65];
     bytes_to_hex(signature_bin, SHA256_DIGEST_LENGTH, signature_hex);
+    log_debug("Signature: %s", signature_hex);
 
     // Step 5: Build the authorization header
     snprintf(out_header->value, sizeof(out_header->value),
              "AWS4-HMAC-SHA256 Credential=%s/%s, SignedHeaders=host;x-amz-date, Signature=%s",
              creds->access_key, scope, signature_hex);
 
+    log_debug("AuthorizationHeader: %s", out_header->value);
     return ERROR_NONE;
 }
 
