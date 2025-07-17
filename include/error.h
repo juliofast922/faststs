@@ -8,7 +8,8 @@ typedef enum {
     ERROR_NONE = 0,
     ERROR_DESERIALIZE_MISSING_FIELD,
     ERROR_DESERIALIZE_INVALID_FORMAT,
-    ERROR_UNKNOWN
+    ERROR_VALIDATION_FAILED,
+    ERROR_UNKNOWN,
     // Add more domain-specific errors here
 } ErrorCode;
 
