@@ -29,10 +29,10 @@ int test_get_caller_identity_all_fields(void) {
 
 
     if (passed) {
-        printf("PASSED test_get_caller_identity_all_fields\n");
+        printf("\033[32mPASSED\033[0m test_get_caller_identity_all_fields\n");
         return 0;
     } else {
-        printf("FAILED test_get_caller_identity_all_fields\n");
+        printf("\033[31mFAILED\033[0m test_get_caller_identity_all_fields\n");
         printf("Error code: %s\n", error_to_string(err));
         return 1;
     }
@@ -56,10 +56,10 @@ int test_get_caller_identity_missing_required(void) {
     ErrorCode err = identity.vtable->deserialize_xml(&identity, xml);
 
     if (err == ERROR_DESERIALIZE_MISSING_FIELD) {
-        printf("PASSED test_get_caller_identity_missing_required\n");
+        printf("\033[32mPASSED\033[0m test_get_caller_identity_missing_required\n");
         return 0;
     } else {
-        printf("FAILED test_get_caller_identity_missing_required\n");
+        printf("\033[31mFAILED\033[0m test_get_caller_identity_missing_required\n");
         printf("Unexpected error code: %s\n", error_to_string(err));
         return 1;
     }

@@ -14,12 +14,13 @@ int test_error_to_string(void) {
     passed &= strcmp(error_to_string(ERROR_DESERIALIZE_MISSING_FIELD), "Missing required field in XML") == 0;
     passed &= strcmp(error_to_string(ERROR_DESERIALIZE_INVALID_FORMAT), "Invalid XML format") == 0;
     passed &= strcmp(error_to_string(ERROR_UNKNOWN), "Unknown error") == 0;
+    passed &= strcmp(error_to_string(ERROR_VALIDATION_FAILED), "Validation failed") == 0;
     passed &= strcmp(error_to_string((ErrorCode)999), "Unknown error") == 0;
 
     if (passed)
-        printf("PASSED test_error_to_string\n");
+        printf("\033[32mPASSED\033[0m test_error_to_string\n");
     else {
-        printf("FAILED test_error_to_string\n");
+        printf("\033[31mFAILED\033[0m test_error_to_string\n");
         return 1;
     }
 

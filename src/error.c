@@ -1,8 +1,5 @@
 #include "error.h"
 
-/**
- * @brief Converts an ErrorCode enum to a human-readable string.
- */
 const char* error_to_string(ErrorCode code) {
     switch (code) {
         case ERROR_NONE:

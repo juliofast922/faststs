@@ -33,10 +33,10 @@ int test_user_all_fields(void) {
     passed &= strcmp(u.password_last_used, "2014-10-10T14:37:51Z") == 0;
 
     if (passed) {
-        printf("PASSED test_user_all_fields\n");
+        printf("\033[32mPASSED\033[0m test_user_all_fields\n");
         return 0;
     } else {
-        printf("FAILED test_user_all_fields\n");
+        printf("\033[31mFAILED\033[0m test_user_all_fields\n");
         printf("Error code: %s\n", error_to_string(err));
         return 1;
     }
@@ -69,10 +69,10 @@ int test_user_missing_optional_fields(void) {
     passed &= u.has_password_last_used == 0;
 
     if (passed) {
-        printf("PASSED test_user_missing_optional_fields\n");
+        printf("\033[32mPASSED\033[0m test_user_missing_optional_fields\n");
         return 0;
     } else {
-        printf("FAILED test_user_missing_optional_fields\n");
+        printf("\033[31mFAILED\033[0m test_user_missing_optional_fields\n");
         printf("Error code: %s\n", error_to_string(err));
         return 1;
     }
@@ -96,10 +96,10 @@ int test_user_missing_required_fields(void) {
     ErrorCode err = u.vtable->deserialize_xml(&u, xml);
 
     if (err == ERROR_DESERIALIZE_MISSING_FIELD) {
-        printf("PASSED test_user_missing_required_fields\n");
+        printf("\033[32mPASSED\033[0m test_user_missing_required_fields\n");
         return 0;
     } else {
-        printf("FAILED test_user_missing_required_fields\n");
+        printf("\033[31mFAILED\033[0m test_user_missing_required_fields\n");
         printf("Error code: %s\n", error_to_string(err));
         return 1;
     }

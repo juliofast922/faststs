@@ -2,19 +2,6 @@
 #include <stdio.h>
 #include "types/arn.h"
 
-/**
- * @brief Validates if the input string is a valid AWS ARN.
- *
- * Performs length check and ensures only valid ASCII characters are present,
- * according to AWS constraints:
- *   - Length: 20–2048 characters
- *   - Pattern: Tab (0x09), LF, CR, ASCII printable characters (0x20–0x7E)
- *
- * Note: This implementation currently validates only the ASCII-safe subset.
- *
- * @param input Input string to validate.
- * @return 1 if valid, 0 otherwise.
- */
 int arn_is_valid(const char *input) {
     if (!input) return 0;
 
@@ -32,16 +19,6 @@ int arn_is_valid(const char *input) {
     return 1;
 }
 
-/**
- * @brief Safely sets the value of an Arn object after validating it.
- *
- * If the input is valid, its value is copied into the `arn` struct.
- * If the input is invalid, the struct remains unchanged and an error is returned.
- *
- * @param arn    Pointer to the Arn struct to populate.
- * @param input  Input ARN string to validate and assign.
- * @return ERROR_NONE on success, or ERROR_VALIDATION_FAILED if input is invalid.
- */
 ErrorCode arn_set(Arn *arn, const char *input) {
     if (!arn || !input) return ERROR_VALIDATION_FAILED;
 

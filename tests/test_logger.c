@@ -21,7 +21,7 @@ int test_logger_stdout(void) {
     log_error("Message ERROR");
 
     // Assume success if no crash
-    printf("PASSED test_logger_stdout\n");
+    printf("\033[32mPASSED\033[0m test_logger_stdout\n");
     return 0;
 }
 
@@ -54,10 +54,10 @@ int test_logger_file_output(void) {
     }
 
     if (file_found) {
-        printf("PASSED test_logger_file_output\n");
+        printf("\033[32mPASSED\033[0m test_logger_file_output\n");
         return 0;
     } else {
-        printf("FAILED test_logger_file_output: Log file not found\n");
+        printf("\033[31mFAILED\033[0m test_logger_file_output: Log file not found\n");
         return 1;
     }
 }

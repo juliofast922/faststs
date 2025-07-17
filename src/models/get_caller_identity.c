@@ -9,16 +9,6 @@ static ModelInterface get_caller_identity_interface = {
     .deserialize_xml = get_caller_identity_deserialize_xml
 };
 
-/**
- * @brief Deserializes a GetCallerIdentity object from XML.
- *
- * Expects XML in the format returned by the AWS STS GetCallerIdentity API.
- * Logs and returns an error code if required fields are missing.
- *
- * @param self  Pointer to the GetCallerIdentity object.
- * @param xml   Raw XML string to parse.
- * @return ErrorCode indicating success or failure.
- */
 ErrorCode get_caller_identity_deserialize_xml(void *self, const char *xml) {
     GetCallerIdentity *id = (GetCallerIdentity *)self;
 
@@ -42,13 +32,6 @@ ErrorCode get_caller_identity_deserialize_xml(void *self, const char *xml) {
     return ERROR_NONE;
 }
 
-/**
- * @brief Constructs and returns a new GetCallerIdentity instance.
- *
- * Initializes all fields to zero and sets the vtable.
- *
- * @return GetCallerIdentity  A fully initialized GetCallerIdentity object.
- */
 GetCallerIdentity get_caller_identity_create() {
     GetCallerIdentity identity = {0};
     identity.vtable = &get_caller_identity_interface;

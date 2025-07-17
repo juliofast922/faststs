@@ -1,15 +1,9 @@
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
+
 #include "utils.h"
 
-/**
- * @brief Extracts text content between <tag> and </tag> from XML input.
- *
- * @param xml       Pointer to the XML string.
- * @param tag       Tag name to search.
- * @param out       Buffer to store extracted text.
- * @param out_size  Size of the output buffer.
- */
 void extract_tag_text(const char *xml, const char *tag, char *out, size_t out_size) {
     char open_tag[64], close_tag[64];
     snprintf(open_tag, sizeof(open_tag), "<%s>", tag);
@@ -27,4 +21,32 @@ void extract_tag_text(const char *xml, const char *tag, char *out, size_t out_si
     } else {
         out[0] = '\0';
     }
+}
+
+const char *get_env_str(const char *key) {
+    return getenv(key);
+}
+
+int get_env_from_file(const char *filename, const char *key, char *out, size_t out_size) {
+    if (!filename || !key || !out || out_size == 0) return 0;
+
+    FILE *file = fopen(filename, "r");
+    if (!file) return 0;
+
+    char line[256];
+    size_t key_len = strlen(key);
+
+    while (fgets(line, sizeof(line), file)) {
+        if (strncmp(line, key, key_len) == 0 && line[key_len] == '=') {
+            char *value = line + key_len + 1;
+            value[strcspn(value, "\r\n")] = '\0';  // Strip newline
+            strncpy(out, value, out_size);
+            out[out_size - 1] = '\0';
+            fclose(file);
+            return 1;
+        }
+    }
+
+    fclose(file);
+    return 0;
 }

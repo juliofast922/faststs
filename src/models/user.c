@@ -11,16 +11,6 @@ static ModelInterface user_model_interface = {
     .deserialize_xml = user_deserialize_xml
 };
 
-/**
- * @brief Deserializes a User object from XML.
- *
- * Expects XML in the format defined by AWS IAM User API response.
- * Logs and returns an error code if required fields are missing.
- *
- * @param self  Pointer to the User object.
- * @param xml   Raw XML string to parse.
- * @return ErrorCode indicating success or failure.
- */
 ErrorCode user_deserialize_xml(void *self, const char *xml) {
     User *user = (User *)self;
 
@@ -52,13 +42,6 @@ ErrorCode user_deserialize_xml(void *self, const char *xml) {
     return ERROR_NONE;
 }
 
-/**
- * @brief Constructs and returns a new User instance.
- *
- * Initializes all fields to zero and sets the vtable.
- *
- * @return User  A fully initialized User object.
- */
 User user_create() {
     User user = {0};
     user.vtable = &user_model_interface;
