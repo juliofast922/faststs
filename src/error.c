@@ -1,8 +1,5 @@
 #include "error.h"
 
-/**
- * @brief Converts an ErrorCode enum to a human-readable string.
- */
 const char* error_to_string(ErrorCode code) {
     switch (code) {
         case ERROR_NONE:
@@ -13,6 +10,12 @@ const char* error_to_string(ErrorCode code) {
             return "Invalid XML format";
         case ERROR_VALIDATION_FAILED:
             return "Validation failed";
+        case ERROR_CREDENTIALS_NOT_FOUND:
+            return "AWS credentials not found";
+        case ERROR_SIGV4_INVALID_INPUT:
+            return "Invalid input for SigV4 signing";
+        case ERROR_SIGV4_SIGNING_FAILURE:
+            return "SigV4 signing failure";
         case ERROR_UNKNOWN:
         default:
             return "Unknown error";

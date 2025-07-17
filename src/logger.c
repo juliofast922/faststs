@@ -1,10 +1,11 @@
 #include <stdio.h>
 #include <stdarg.h>
-#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <sys/stat.h>
+
 #include "logger.h"
+#include "utils.h"
 
 static LogLevel current_level = LOG_INFO;
 static int log_to_file = 0;
@@ -29,11 +30,34 @@ static const char *level_to_string(LogLevel level) {
 }
 
 /**
- * @brief Converts a string (from .env) to a LogLevel enum.
+ * @brief Returns the log level string with ANSI color for console output.
  *
- * @param lvl The string to convert.
- * @return LogLevel Corresponding enum value.
+ * Only applies color to the level name. Used for stdout only.
+ *
+ * @param level The LogLevel enum.
+ * @return const char* Colored level name (static buffer).
  */
+static const char *colored_level(LogLevel level) {
+    static char buf[16];
+    const char *name = level_to_string(level);
+    const char *color;
+
+    switch (level) {
+        case LOG_ERROR: color = "\033[31m"; break; // red
+        case LOG_WARN:  color = "\033[33m"; break; // yellow
+        case LOG_DEBUG: color = "\033[34m"; break; // blue
+        default:        color = ""; break;         // no color for INFO/UNKNOWN
+    }
+
+    if (color[0] == '\0') {
+        snprintf(buf, sizeof(buf), "%s", name);
+    } else {
+        snprintf(buf, sizeof(buf), "%s%s\033[0m", color, name); // reset after color
+    }
+
+    return buf;
+}
+
 static LogLevel string_to_level(const char *lvl) {
     if (strcmp(lvl, "DEBUG") == 0) return LOG_DEBUG;
     if (strcmp(lvl, "INFO") == 0)  return LOG_INFO;
@@ -42,44 +66,22 @@ static LogLevel string_to_level(const char *lvl) {
     return LOG_INFO;
 }
 
-/**
- * @brief Initializes the logger with config from a .env file.
- *
- * Currently only supports reading LOG_LEVEL.
- *
- * @param env_path Path to the .env file.
- */
 void logger_init(const char *env_path) {
-    if (env_path == NULL) {
-        const char *env_level = getenv("LOG_LEVEL");
-        if (env_level != NULL) {
-            current_level = string_to_level(env_level);
-        }
-        return;
-    }
+    char buffer[64];
 
-    FILE *env = fopen(env_path, "r");
-    if (!env) return;
-
-    char line[256];
-    while (fgets(line, sizeof(line), env)) {
-        if (strncmp(line, "LOG_LEVEL=", 10) == 0) {
-            char *lvl = line + 10;
-            lvl[strcspn(lvl, "\r\n")] = 0;  // Remove newline
-            current_level = string_to_level(lvl);
+    if (env_path) {
+        if (get_env_from_file(env_path, "LOG_LEVEL", buffer, sizeof(buffer))) {
+            current_level = string_to_level(buffer);
+            return;
         }
     }
-    fclose(env);
+
+    const char *env = get_env_str("LOG_LEVEL");
+    if (env) {
+        current_level = string_to_level(env);
+    }
 }
 
-/**
- * @brief Enables file logging with rotation.
- *
- * When enabled, logs are written to logs/ and rotated after `rotate_sec`.
- *
- * @param enable       1 to enable file logging, 0 to disable.
- * @param rotate_sec   Time window in seconds for log file rotation.
- */
 void logger_set_file_logging(int enable, int rotate_sec) {
     log_to_file = enable;
     rotation_period = rotate_sec;
@@ -116,17 +118,6 @@ static void open_log_file_if_needed() {
     log_file = fopen(filename, "a");
 }
 
-/**
- * @brief Logs a message with level, timestamp, source location, and JSON formatting.
- *
- * If file logging is enabled, also writes to a rotated log file.
- *
- * @param level LogLevel enum (DEBUG, INFO, etc.)
- * @param file  Source file name (from __FILE__)
- * @param line  Line number (from __LINE__)
- * @param fmt   Format string for the message
- * @param ...   Variadic args for formatting
- */
 void logger_log(LogLevel level, const char *file, int line, const char *fmt, ...) {
     if (level < current_level) return;
 
@@ -146,8 +137,8 @@ void logger_log(LogLevel level, const char *file, int line, const char *fmt, ...
     // Print to stdout in JSON
     fprintf(stdout,
         "{\"level\":\"%s\",\"timestamp\":\"%s\",\"message\":\"%s\",\"source\":\"%s:%d\"}\n",
-        level_to_string(level), timestamp, message, file, line
-    );
+        colored_level(level), timestamp, message, file, line
+    );   
 
     // Write to file if enabled
     if (log_to_file) {

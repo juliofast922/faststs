@@ -4,7 +4,9 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <dirent.h>
+
 #include "logger.h"
+#include "test_utils.h"
 
 /**
  * @brief Tests logging to stdout only.
@@ -21,7 +23,7 @@ int test_logger_stdout(void) {
     log_error("Message ERROR");
 
     // Assume success if no crash
-    printf("PASSED test_logger_stdout\n");
+    print_test_result("test_logger_stdout", 1, ERROR_NONE);
     return 0;
 }
 
@@ -53,57 +55,18 @@ int test_logger_file_output(void) {
         closedir(dir);
     }
 
-    if (file_found) {
-        printf("PASSED test_logger_file_output\n");
-        return 0;
-    } else {
-        printf("FAILED test_logger_file_output: Log file not found\n");
-        return 1;
-    }
+    print_test_result("test_logger_file_output", file_found, file_found ? ERROR_NONE : ERROR_UNKNOWN);
+    return file_found ? 0 : 1;
 }
 
-// === Test runner ===
+// === Test Runner ===
 
-typedef int (*test_func_t)(void);
-
-typedef struct {
-    const char *name;
-    test_func_t func;
-} TestCase;
-
-// Table of available test cases
 TestCase test_cases[] = {
     {"test_logger_stdout", test_logger_stdout},
     {"test_logger_file_output", test_logger_file_output},
     {NULL, NULL}
 };
 
-/**
- * @brief Entry point for logger tests.
- *
- * If called with an argument, runs only the named test.
- * Otherwise, executes all registered test functions.
- *
- * @return 0 on success, 1 on failure.
- */
 int main(int argc, char *argv[]) {
-    int failed = 0;
-
-    if (argc == 2) {
-        const char *requested = argv[1];
-        for (int i = 0; test_cases[i].name != NULL; i++) {
-            if (strcmp(test_cases[i].name, requested) == 0) {
-                return test_cases[i].func();  // Return pass/fail
-            }
-        }
-        printf("Test not found: '%s'\n", requested);
-        return 1;
-    }
-
-    for (int i = 0; test_cases[i].name != NULL; i++) {
-        if (test_cases[i].func() != 0)
-            failed = 1;
-    }
-
-    return failed;
+    return run_all_tests(argc, argv, test_cases);
 }
