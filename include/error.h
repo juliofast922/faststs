@@ -12,6 +12,9 @@ typedef enum {
     ERROR_CREDENTIALS_NOT_FOUND,
     ERROR_SIGV4_INVALID_INPUT,
     ERROR_SIGV4_SIGNING_FAILURE,
+    ERROR_HTTP_INVALID_INPUT,
+    ERROR_HTTP_INIT_FAILED,
+    ERROR_HTTP_CURL,
     ERROR_UNKNOWN
     // Add more domain-specific errors here
 } ErrorCode;
