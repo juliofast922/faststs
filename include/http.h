@@ -23,6 +23,11 @@ typedef struct {
     const char **headers;          // NULL-terminated array of header strings.
     size_t body_len;                // Length of body.
     int timeout_seconds;           // Timeout for request.
+    
+    // TLS client auth support
+    const char *cert_path;
+    const char *key_path;
+    const char *ca_path;
 } HttpRequest;
 
 /**

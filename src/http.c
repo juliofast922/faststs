@@ -59,6 +59,15 @@ ErrorCode http_execute(const HttpRequest *req, HttpResponse *res) {
             curl_easy_setopt(curl, CURLOPT_TIMEOUT, req->timeout_seconds);
         }
 
+        // Optional TLS settings
+        if (req->cert_path && req->key_path) {
+            curl_easy_setopt(curl, CURLOPT_SSLCERT, req->cert_path);
+            curl_easy_setopt(curl, CURLOPT_SSLKEY,  req->key_path);
+        }
+        if (req->ca_path) {
+            curl_easy_setopt(curl, CURLOPT_CAINFO, req->ca_path);
+        }
+
         for (int i = 0; req->headers && req->headers[i]; ++i) {
             chunk = curl_slist_append(chunk, req->headers[i]);
         }

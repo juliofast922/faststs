@@ -22,6 +22,22 @@ const char* error_to_string(ErrorCode code) {
             return "Failed to initialize HTTP client";
         case ERROR_HTTP_CURL:
             return "HTTP request failed (curl)";
+        case ERROR_SOCKET_CREATE_FAILED:
+            return "Failed to create socket";
+        case ERROR_SOCKET_BIND_FAILED:
+            return "Failed to bind socket";
+        case ERROR_SOCKET_LISTEN_FAILED:
+            return "Failed to listen on socket";
+        case ERROR_SOCKET_ACCEPT_FAILED:
+            return "Failed to accept client connection";
+        case ERROR_SOCKET_ALREADY_CLOSED:
+            return "Socket Already Closed";
+        case ERROR_SSL_HANDSHAKE_FAILED:
+            return "TLS handshake failed";
+        case ERROR_SSL_READ_FAILED:
+            return "TLS read failed";
+        case ERROR_SSL_WRITE_FAILED:
+            return "TLS write failed";
         case ERROR_UNKNOWN:
         default:
             return "Unknown error";

@@ -5,18 +5,40 @@
  * @brief Error codes used across domain deserialization and validation.
  */
 typedef enum {
+    // Generic success
     ERROR_NONE = 0,
+
+    // Deserialization / parsing
     ERROR_DESERIALIZE_MISSING_FIELD,
     ERROR_DESERIALIZE_INVALID_FORMAT,
+
+    // Validation
     ERROR_VALIDATION_FAILED,
+
+    // AWS credentials
     ERROR_CREDENTIALS_NOT_FOUND,
+
+    // SigV4
     ERROR_SIGV4_INVALID_INPUT,
     ERROR_SIGV4_SIGNING_FAILURE,
+
+    // HTTP client
     ERROR_HTTP_INVALID_INPUT,
     ERROR_HTTP_INIT_FAILED,
     ERROR_HTTP_CURL,
+
+    // HTTP server / transport
+    ERROR_SOCKET_CREATE_FAILED,
+    ERROR_SOCKET_BIND_FAILED,
+    ERROR_SOCKET_LISTEN_FAILED,
+    ERROR_SOCKET_ACCEPT_FAILED,
+    ERROR_SSL_HANDSHAKE_FAILED,
+    ERROR_SSL_READ_FAILED,
+    ERROR_SSL_WRITE_FAILED,
+    ERROR_SOCKET_ALREADY_CLOSED,
+
+    // Fallback
     ERROR_UNKNOWN
-    // Add more domain-specific errors here
 } ErrorCode;
 
 /**

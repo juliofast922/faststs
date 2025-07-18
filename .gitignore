@@ -53,3 +53,9 @@ tags
 # AWS
 /aws
 awscliv2.zip
+
+# Certs
+/certs
+
+# Private Notes
+/notes
