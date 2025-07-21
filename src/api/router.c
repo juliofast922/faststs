@@ -17,12 +17,13 @@ typedef struct {
     char method[METHOD_LEN];
     char path[PATH_LEN];
     route_handler_t handler;
+    AuthPolicy auth;
 } Route;
 
 static Route route_table[MAX_ROUTES];
 static int route_count = 0;
 
-void register_route(const char *method, const char *path, route_handler_t handler) {
+void register_route(const char *method, const char *path, route_handler_t handler, AuthPolicy auth) {
     if (route_count >= MAX_ROUTES) {
         log_error("Route table full; cannot register '%s %s'", method, path);
         return;
@@ -31,9 +32,10 @@ void register_route(const char *method, const char *path, route_handler_t handle
     strncpy(route_table[route_count].method, method, METHOD_LEN - 1);
     strncpy(route_table[route_count].path, path, PATH_LEN - 1);
     route_table[route_count].handler = handler;
+    route_table[route_count].auth = auth;
     route_count++;
 
-    log_info("Registered route: %s %s", method, path);
+    log_debug("Registered route: %s %s (auth=%d)", method, path, auth);
 }
 
 // Simple parser to extract method and path from request line
@@ -54,23 +56,38 @@ void handle_request(SSL *ssl, const char *raw_request) {
 
     log_debug("Parsed request: method=%s, path=%s", method, path);
 
-    // ✅ Step: check client certificate
-    X509 *client_cert = SSL_get_peer_certificate(ssl);
-    ErrorCode auth_result = is_client_allowed(client_cert);
-    if (client_cert) X509_free(client_cert);
-
-    if (auth_result != ERROR_NONE) {
-        log_warn("Unauthorized client: %s", error_to_string(auth_result));
-        const char *resp = "HTTP/1.1 403 Forbidden\r\n\r\n";
-        SSL_write(ssl, resp, strlen(resp));
-        return;
-    }
-
-    // Route dispatch
     for (int i = 0; i < route_count; i++) {
         if (strcmp(method, route_table[i].method) == 0 &&
             strcmp(path, route_table[i].path) == 0) {
-            log_info("Dispatching to handler: %s %s", method, path);
+
+            AuthPolicy auth = route_table[i].auth;
+            ErrorCode auth_result = ERROR_NONE;
+
+            switch (auth) {
+                case AUTH_NONE:
+                    auth_result = ERROR_NONE;
+                    break;
+
+                case AUTH_MTLS: {
+                    X509 *client_cert = SSL_get_peer_certificate(ssl);
+                    auth_result = is_client_allowed(client_cert);
+                    if (client_cert) X509_free(client_cert);
+                    break;
+                }
+
+                default:
+                    log_error("Unknown auth policy for route %s %s", method, path);
+                    auth_result = ERROR_VALIDATION_FAILED;
+            }
+
+            if (auth_result != ERROR_NONE) {
+                log_warn("Unauthorized client: %s", error_to_string(auth_result));
+                const char *resp = "HTTP/1.1 403 Forbidden\r\n\r\n";
+                SSL_write(ssl, resp, strlen(resp));
+                return;
+            }
+
+            log_debug("Dispatching to handler: %s %s", method, path);
             route_table[i].handler(ssl, raw_request);
             log_info("Successfully responded to: %s %s", method, path);
             return;

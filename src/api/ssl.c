@@ -22,6 +22,17 @@ SSL_CTX *create_ssl_context(const char *cert_file, const char *key_file, const c
     }
 
     SSL_CTX_set_min_proto_version(ctx, TLS1_2_VERSION);
+    SSL_CTX_set_options(ctx, SSL_OP_NO_RENEGOTIATION);
+    SSL_CTX_set_ciphersuites(ctx, "TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384");
+    SSL_CTX_set_cipher_list(ctx, "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256");
+
+    unsigned char sid_ctx[] = "fastgate-session-id";
+    if (SSL_CTX_set_session_id_context(ctx, sid_ctx, sizeof(sid_ctx) - 1) != 1) {
+        log_error("Failed to set session ID context");
+        ERR_print_errors_fp(stderr);
+        SSL_CTX_free(ctx);
+        return NULL;
+    }
 
     if (SSL_CTX_use_certificate_file(ctx, cert_file, SSL_FILETYPE_PEM) <= 0) {
         log_error("Failed to load server certificate from %s", cert_file);
@@ -38,7 +49,7 @@ SSL_CTX *create_ssl_context(const char *cert_file, const char *key_file, const c
     }
 
     // Verify client certificates
-    SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, NULL);
+    SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
     if (SSL_CTX_load_verify_locations(ctx, ca_file, NULL) != 1) {
         log_error("Failed to load CA certificate from %s", ca_file);
         ERR_print_errors_fp(stderr);
@@ -46,7 +57,7 @@ SSL_CTX *create_ssl_context(const char *cert_file, const char *key_file, const c
         return NULL;
     }
 
-    log_info("SSL context initialized with server cert='%s', key='%s', ca='%s'",
+    log_debug("SSL context initialized with server cert='%s', key='%s', ca='%s'",
              cert_file, key_file, ca_file);
 
     return ctx;

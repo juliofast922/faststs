@@ -5,6 +5,12 @@
 
 #include <openssl/ssl.h>
 
+typedef enum {
+    AUTH_NONE,
+    AUTH_MTLS
+    // AUTH_API_KEY, AUTH_JWT, etc.
+} AuthPolicy;
+
 /**
  * @brief Type definition for HTTP route handler functions.
  *
@@ -21,8 +27,9 @@ typedef void (*route_handler_t)(SSL *ssl, const char *request);
  * @param method  The HTTP method (e.g., "GET", "POST").
  * @param path    The URL path (e.g., "/", "/login").
  * @param handler The function to handle this route.
+ * @param auth    Auth Policy to specific endpoint
  */
-void register_route(const char *method, const char *path, route_handler_t handler);
+void register_route(const char *method, const char *path, route_handler_t handler, AuthPolicy auth);
 
 /**
  * @brief Dispatches an incoming request to the appropriate route handler.

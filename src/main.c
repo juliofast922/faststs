@@ -28,21 +28,21 @@ int main() {
     logger_init(".env");
     //logger_set_file_logging(1, 300); <- Set Log file
 
-    log_info("Starting fastgate API...");
+    log_debug("Starting fastgate API...");
 
     // Load port from .env or ENV
     int port = 8443; // default fallback
     char port_buf[16];
 
-    if (get_env_from_file(".env", "PORT", port_buf, sizeof(port_buf)) ||
-        (get_env_str("PORT") && strncpy(port_buf, get_env_str("PORT"), sizeof(port_buf)))) {
+    if (get_env_from_file(".env", "HTTP_PORT", port_buf, sizeof(port_buf)) ||
+        (get_env_str("HTTP_PORT") && strncpy(port_buf, get_env_str("HTTP_PORT"), sizeof(port_buf)))) {
         port_buf[sizeof(port_buf) - 1] = '\0';
         port = atoi(port_buf);
         if (port <= 0 || port > 65535) {
             log_warn("Invalid PORT specified: %s — using default 8443", port_buf);
             port = 8443;
         } else {
-            log_info("Loaded port from env: %d", port);
+            log_debug("Loaded port from env: %d", port);
         }
     }
 
@@ -54,7 +54,8 @@ int main() {
     }
 
     // Register routes
-    register_route("GET", "/", handle_root);
+    register_route("GET", "/", handle_root, AUTH_MTLS);
+    register_route("GET", "/benchmark", handle_benchmark, AUTH_NONE);
 
     // Start server
     int server_fd;
