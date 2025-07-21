@@ -16,4 +16,6 @@
  */
 void handle_root(SSL *ssl, const char *request);
 
+void handle_benchmark(SSL *ssl, const char *request);
+
 #endif // HANDLERS_H

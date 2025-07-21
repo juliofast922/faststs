@@ -44,7 +44,7 @@ int test_tls_hello_world(void) {
     }
 
     // Register test handler
-    register_route("GET", "/", handle_root);
+    register_route("GET", "/", handle_root, AUTH_MTLS);
 
     // Start server in background thread
     pthread_t server_thread;

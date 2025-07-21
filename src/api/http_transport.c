@@ -16,6 +16,7 @@
 
 #define MAX_CLIENTS 10
 #define READ_BUF_SIZE 4096
+#define READ_TIMEOUT_SEC 15
 
 // Static file descriptor shared between start() and accept_loop()
 static int server_fd = -1;
@@ -81,16 +82,25 @@ static ErrorCode http_accept_loop(SSL_CTX *ctx) {
         return ERROR_SOCKET_ACCEPT_FAILED;
     }
 
-    log_info("Accept loop starting...");
+    log_debug("Accept loop starting...");
 
     while (!atomic_load(&should_stop)) {
         struct sockaddr_in addr;
         socklen_t len = sizeof(addr);
+        
         int client_fd = accept(server_fd, (struct sockaddr*)&addr, &len);
         if (client_fd < 0) {
             if (atomic_load(&should_stop)) break;  // likely interrupted by shutdown
             log_warn("accept() failed");
             continue;
+        }
+
+        struct timeval timeout = {
+            .tv_sec = READ_TIMEOUT_SEC,
+            .tv_usec = 0
+        };
+        if (setsockopt(client_fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0) {
+            log_warn("Failed to set socket read timeout");
         }
 
         SSL *ssl = SSL_new(ctx);
@@ -110,21 +120,36 @@ static ErrorCode http_accept_loop(SSL_CTX *ctx) {
             continue;
         }
 
-        char buf[READ_BUF_SIZE] = {0};
-        int bytes = SSL_read(ssl, buf, sizeof(buf) - 1);
-        if (bytes < 0) {
-            log_error("SSL_read() failed");
-            ERR_print_errors_fp(stderr);
-            SSL_shutdown(ssl);
-            SSL_free(ssl);
-            close(client_fd);
-            continue;
+        char buf[READ_BUF_SIZE];
+        int keep_alive = 1;
+
+        while (keep_alive) {
+            memset(buf, 0, sizeof(buf));
+
+            int bytes = SSL_read(ssl, buf, sizeof(buf) - 1);
+            if (bytes <= 0) {
+                int err = SSL_get_error(ssl, bytes);
+                if (err == SSL_ERROR_ZERO_RETURN) {
+                    log_debug("SSL connection closed by peer");
+                } else {
+                    log_error("SSL_read() failed");
+                    ERR_print_errors_fp(stderr);
+                }
+                break;
+            }
+
+            buf[bytes] = '\0';
+            log_debug("Received request:\n%s", buf);
+
+            // Detectar Connection: close para terminar
+            if (strstr(buf, "Connection: close") || strstr(buf, "connection: close")) {
+                keep_alive = 0;
+            }
+
+            handle_request(ssl, buf);
         }
 
-        buf[bytes] = '\0';
-        log_debug("Received request:\n%s", buf);
-        handle_request(ssl, buf);
-
+        // Cerrar conexión TLS después del loop
         SSL_shutdown(ssl);
         SSL_free(ssl);
         close(client_fd);
@@ -135,7 +160,7 @@ static ErrorCode http_accept_loop(SSL_CTX *ctx) {
         server_fd = -1;
     }
 
-    log_info("Shutting down accept loop");
+    log_debug("Shutting down accept loop");
     atomic_store(&should_stop, 0);
     return ERROR_NONE;
 }
