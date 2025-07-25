@@ -7,7 +7,7 @@
 #include "api/transport.h"
 #include "api/ssl.h"
 #include "api/router.h"
-#include "api/handlers.h"
+#include "api/routes/base.h"
 #include "http.h"
 #include "error.h"
 #include "test_utils.h"

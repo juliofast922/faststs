@@ -141,7 +141,6 @@ static ErrorCode http_accept_loop(SSL_CTX *ctx) {
             buf[bytes] = '\0';
             log_debug("Received request:\n%s", buf);
 
-            // Detectar Connection: close para terminar
             if (strstr(buf, "Connection: close") || strstr(buf, "connection: close")) {
                 keep_alive = 0;
             }
@@ -149,7 +148,12 @@ static ErrorCode http_accept_loop(SSL_CTX *ctx) {
             handle_request(ssl, buf);
         }
 
-        // Cerrar conexión TLS después del loop
+        int *flag = SSL_get_ex_data(ssl, SSL_EX_AUTHORIZED_IDX);
+        if (flag) {
+            SSL_set_ex_data(ssl, SSL_EX_AUTHORIZED_IDX, NULL);
+            free(flag);
+        }
+
         SSL_shutdown(ssl);
         SSL_free(ssl);
         close(client_fd);

@@ -1,7 +1,7 @@
-// api/handlers.h
+// api/routes/base.h
 
-#ifndef HANDLERS_H
-#define HANDLERS_H
+#ifndef BASE_H
+#define BASE_H
 
 #include <openssl/ssl.h>
 
@@ -16,6 +16,14 @@
  */
 void handle_root(SSL *ssl, const char *request);
 
+/**
+ * @brief Handles the GET /benchmark endpoint.
+ *
+ * This functionwas created to use it on benchmarks.
+ *
+ * @param ssl     The active SSL connection with the client.
+ * @param request The raw HTTP request string (not parsed).
+ */
 void handle_benchmark(SSL *ssl, const char *request);
 
-#endif // HANDLERS_H
+#endif // BASE_H

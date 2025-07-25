@@ -69,9 +69,27 @@ void handle_request(SSL *ssl, const char *raw_request) {
                     break;
 
                 case AUTH_MTLS: {
-                    X509 *client_cert = SSL_get_peer_certificate(ssl);
-                    auth_result = is_client_allowed(client_cert);
-                    if (client_cert) X509_free(client_cert);
+                    int *authorized_flag = SSL_get_ex_data(ssl, SSL_EX_AUTHORIZED_IDX);
+                
+                    if (authorized_flag && *authorized_flag == 1) {
+                        log_debug("Client already authorized");
+                        auth_result = ERROR_NONE;
+                    } else {
+                        X509 *client_cert = SSL_get_peer_certificate(ssl);
+                        auth_result = is_client_allowed(client_cert);
+                        if (client_cert) X509_free(client_cert);
+                
+                        if (auth_result == ERROR_NONE) {
+                            int *flag = malloc(sizeof(int));
+                            if (flag) {
+                                *flag = 1;
+                                SSL_set_ex_data(ssl, SSL_EX_AUTHORIZED_IDX, flag);
+                                log_debug("Client authorized and cached for session");
+                            } else {
+                                log_warn("Failed to allocate memory for auth flag");
+                            }
+                        }
+                    }
                     break;
                 }
 

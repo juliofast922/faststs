@@ -1,3 +1,5 @@
+// src/main.c
+
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -18,7 +20,7 @@
 #include "aws/sigv4.h"
 #include "aws/canonical_request.h"
 
-#include "api/handlers.h"
+#include "api/routes/base.h"
 #include "api/router.h"
 #include "api/ssl.h"
 #include "api/transport.h"
