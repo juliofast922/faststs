@@ -1,6 +1,6 @@
-// api/handlers.c
+// api/routes/base.c
 
-#include "api/handlers.h"
+#include "api/routes/base.h"
 #include <string.h>
 
 void handle_root(SSL *ssl, const char *request) {

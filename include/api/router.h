@@ -5,6 +5,8 @@
 
 #include <openssl/ssl.h>
 
+#define SSL_EX_AUTHORIZED_IDX 1
+
 typedef enum {
     AUTH_NONE,
     AUTH_MTLS

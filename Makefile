@@ -3,7 +3,7 @@ CC = gcc
 CFLAGS = -Wall -Wextra -Iinclude
 LDLIBS = -lssl -lcrypto -lcurl
 SRC_DIR = src
-SRC = $(filter-out $(SRC_DIR)/main.c, $(wildcard $(SRC_DIR)/**/*.c) $(wildcard $(SRC_DIR)/*.c))
+SRC := $(shell find $(SRC_DIR) -name '*.c' ! -name 'main.c')
 BIN = bin/fastgate
 
 TEST_DIR = tests

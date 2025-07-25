@@ -34,7 +34,7 @@ ErrorCode http_execute(const HttpRequest *req, HttpResponse *res) {
     ErrorCode final_err = ERROR_UNKNOWN;
 
     for (int attempt = 1; attempt <= MAX_RETRIES; ++attempt) {
-        log_info("HTTP attempt %d to %s", attempt, req->url);
+        log_debug("HTTP attempt %d to %s", attempt, req->url);
 
         CURL *curl = curl_easy_init();
         if (!curl) {
