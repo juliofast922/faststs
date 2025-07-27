@@ -50,3 +50,23 @@ int get_env_from_file(const char *filename, const char *key, char *out, size_t o
     fclose(file);
     return 0;
 }
+
+int match_form_param(const char *body, const char *key, char *out, size_t out_size) {
+    if (!body || !key || !out || out_size == 0) return 0;
+    size_t key_len = strlen(key);
+
+    const char *start = strstr(body, key);
+    if (!start) return 0;
+
+    start += key_len;
+    if (*start != '=') return 0;
+    start++;
+
+    const char *end = strchr(start, '&');
+    size_t len = end ? (size_t)(end - start) : strlen(start);
+    if (len >= out_size) return 0;
+
+    strncpy(out, start, len);
+    out[len] = '\0';
+    return 1;
+}

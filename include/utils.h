@@ -37,4 +37,17 @@ const char *get_env_str(const char *key);
  */
 int get_env_from_file(const char *filename, const char *key, char *out, size_t out_size);
 
+/**
+ * @brief Parses a URL-encoded key=value body string and extracts a parameter.
+ *
+ * For example: extract from "Action=Test&Version=2011-06-15"
+ *
+ * @param body The full body string.
+ * @param key The key to search for.
+ * @param out Buffer to store the value.
+ * @param out_size Size of the output buffer.
+ * @return int 1 if key found, 0 otherwise.
+ */
+int match_form_param(const char *body, const char *key, char *out, size_t out_size);
+
 #endif // UTILS_H

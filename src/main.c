@@ -25,6 +25,8 @@
 #include "api/ssl.h"
 #include "api/transport.h"
 
+#include "api/routes/sts_dispatcher.h"
+
 int main() {
     SSL_library_init();
     logger_init(".env");
@@ -58,6 +60,7 @@ int main() {
     // Register routes
     register_route("GET", "/", handle_root, AUTH_MTLS);
     register_route("GET", "/benchmark", handle_benchmark, AUTH_NONE);
+    register_route("POST", "/sts", handle_sts_dispatcher, AUTH_MTLS);
 
     // Start server
     int server_fd;

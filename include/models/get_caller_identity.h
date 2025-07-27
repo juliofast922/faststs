@@ -1,5 +1,5 @@
-#ifndef GET_CALLER_IDENTITY_H
-#define GET_CALLER_IDENTITY_H
+#ifndef GET_CALLER_IDENTITY_MODEL_H
+#define GET_CALLER_IDENTITY_MODEL_H
 
 #include "error.h"
 #include "model.h"
@@ -26,4 +26,4 @@ GetCallerIdentity get_caller_identity_create();
  */
 ErrorCode get_caller_identity_deserialize_xml(void *self, const char *xml);
 
-#endif // GET_CALLER_IDENTITY_H
+#endif // GET_CALLER_IDENTITY_MODEL_H
