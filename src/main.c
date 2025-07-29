@@ -27,7 +27,15 @@
 
 #include "api/routes/sts_dispatcher.h"
 
+#include <sys/resource.h>
+
+void bump_fd_limit() {
+    struct rlimit lim = {10000, 10000};
+    setrlimit(RLIMIT_NOFILE, &lim);
+}
+
 int main() {
+    bump_fd_limit();
     SSL_library_init();
     logger_init(".env");
     //logger_set_file_logging(1, 300); <- Set Log file
@@ -59,7 +67,6 @@ int main() {
 
     // Register routes
     register_route("GET", "/", handle_root, AUTH_MTLS);
-    register_route("GET", "/benchmark", handle_benchmark, AUTH_NONE);
     register_route("POST", "/sts", handle_sts_dispatcher, AUTH_MTLS);
 
     // Start server

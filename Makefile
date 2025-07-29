@@ -40,5 +40,8 @@ test_func:
 	$(CC) $(CFLAGS) -o $(TEST_BIN_DIR)/$(file) $(TEST_DIR)/$(file).c $(SRC) $(LDLIBS)
 	@$(TEST_BIN_DIR)/$(file) $(func)
 
+benchmark:
+	python3 scripts/benchmark.py $(PROC)
+	
 clean:
 	rm -rf bin

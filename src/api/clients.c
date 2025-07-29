@@ -1,5 +1,3 @@
-// api/clients.c
-
 #include "api/clients.h"
 #include "logger.h"
 #include "error.h"
@@ -100,30 +98,47 @@ ErrorCode is_client_allowed(X509 *client_cert) {
         }
     }
 
-    // Subject Alternative Name (SAN) — DNS only
+    // Subject Alternative Name (SAN)
     if (policy.san_count > 0) {
         GENERAL_NAMES *san_list = X509_get_ext_d2i(client_cert, NID_subject_alt_name, NULL, NULL);
-        int san_match = 0;
-        if (san_list) {
-            for (int i = 0; i < sk_GENERAL_NAME_num(san_list); i++) {
-                const GENERAL_NAME *name = sk_GENERAL_NAME_value(san_list, i);
-                if (name->type == GEN_DNS) {
-                    const char *dns_name = (const char *)ASN1_STRING_get0_data(name->d.dNSName);
-                    if (dns_name && match_any_san(dns_name, policy.allowed_san, policy.san_count)) {
-                        san_match = 1;
-                        break;
-                    }
-                }
-            }
-            GENERAL_NAMES_free(san_list);
-        }
-
-        if (!san_match) {
-            log_warn("No SAN matched allowed list");
+        if (!san_list) {
+            log_warn("No SAN section found");
             return ERROR_VALIDATION_FAILED;
         }
+
+        for (int i = 0; i < sk_GENERAL_NAME_num(san_list); i++) {
+            const GENERAL_NAME *name = sk_GENERAL_NAME_value(san_list, i);
+            if (name->type == GEN_DNS) {
+                const char *dns_name = (const char *)ASN1_STRING_get0_data(name->d.dNSName);
+                if (dns_name && match_any_san(dns_name, policy.allowed_san, policy.san_count)) {
+                    GENERAL_NAMES_free(san_list);
+                    log_debug("Client certificate SAN matched");
+                    return ERROR_NONE;
+                }
+            }
+        }
+
+        GENERAL_NAMES_free(san_list);
+        log_warn("No SAN matched allowed list");
+        return ERROR_VALIDATION_FAILED;
     }
 
     log_debug("Client certificate accepted based on policy");
     return ERROR_NONE;
+}
+
+// --- New callback for use in SSL_CTX_set_verify ---
+int verify_cert_callback(int preverify_ok, X509_STORE_CTX *ctx) {
+    if (!preverify_ok) {
+        return 0;  // Let OpenSSL reject it first
+    }
+
+    X509 *cert = X509_STORE_CTX_get_current_cert(ctx);
+    if (!cert) {
+        log_error("verify_cert_callback: Failed to get current certificate");
+        return 0;
+    }
+
+    ErrorCode result = is_client_allowed(cert);
+    return result == ERROR_NONE ? 1 : 0;
 }

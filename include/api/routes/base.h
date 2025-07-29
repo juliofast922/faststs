@@ -16,14 +16,4 @@
  */
 void handle_root(SSL *ssl, const char *request);
 
-/**
- * @brief Handles the GET /benchmark endpoint.
- *
- * This functionwas created to use it on benchmarks.
- *
- * @param ssl     The active SSL connection with the client.
- * @param request The raw HTTP request string (not parsed).
- */
-void handle_benchmark(SSL *ssl, const char *request);
-
 #endif // BASE_H

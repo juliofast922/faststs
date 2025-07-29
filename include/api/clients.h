@@ -32,4 +32,6 @@ typedef struct {
  */
 void load_cert_policy_from_env(CertPolicyConfig *config);
 
+int verify_cert_callback(int preverify_ok, X509_STORE_CTX *ctx);
+
 #endif // CLIENTS_H
