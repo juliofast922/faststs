@@ -9,7 +9,8 @@
 
 typedef enum {
     AUTH_NONE,
-    AUTH_MTLS
+    AUTH_MTLS,
+    AUTH_PSK
     // AUTH_API_KEY, AUTH_JWT, etc.
 } AuthPolicy;
 

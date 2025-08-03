@@ -70,3 +70,14 @@ int match_form_param(const char *body, const char *key, char *out, size_t out_si
     out[len] = '\0';
     return 1;
 }
+
+int hexstr_to_bytes(const char *hex, unsigned char *out, size_t *out_len) {
+    size_t len = strlen(hex);
+    if (len % 2 != 0) return -1;
+
+    *out_len = len / 2;
+    for (size_t i = 0; i < *out_len; i++) {
+        if (sscanf(hex + 2*i, "%2hhx", &out[i]) != 1) return -1;
+    }
+    return 0;
+}

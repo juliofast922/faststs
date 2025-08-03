@@ -40,4 +40,6 @@ ErrorCode create_ssl_context_safe(
     SSL_CTX **out_ctx
 );
 
+ErrorCode create_psk_context_safe(const char *identity, const char *psk_hex, SSL_CTX **out_ctx);
+
 #endif // SSL_HELPER_H

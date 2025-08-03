@@ -37,6 +37,10 @@ typedef enum {
     ERROR_SSL_WRITE_FAILED,
     ERROR_SOCKET_ALREADY_CLOSED,
 
+    // PSK-related
+    ERROR_SSL_CTX,
+    ERROR_INVALID_ARGUMENT,
+
     // Fallback
     ERROR_UNKNOWN
 } ErrorCode;

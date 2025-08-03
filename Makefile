@@ -17,7 +17,7 @@ all: run
 run: $(SRC_DIR)/main.c $(SRC)
 	@mkdir -p bin
 	$(CC) $(CFLAGS) -o $(BIN) $(SRC_DIR)/main.c $(SRC) $(LDLIBS)
-	@$(BIN)
+	-@$(BIN) || echo "Exited with non-zero status (ignored)"
 
 # Run all tests
 test: $(TEST_FILES)
@@ -40,8 +40,5 @@ test_func:
 	$(CC) $(CFLAGS) -o $(TEST_BIN_DIR)/$(file) $(TEST_DIR)/$(file).c $(SRC) $(LDLIBS)
 	@$(TEST_BIN_DIR)/$(file) $(func)
 
-benchmark:
-	python3 scripts/benchmark.py $(PROC)
-	
 clean:
 	rm -rf bin

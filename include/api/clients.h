@@ -7,6 +7,8 @@
 #include "error.h"
 
 #define MAX_POLICY_ENTRIES 10
+#define MAX_PSK_ENTRIES 8
+#define PSK_IDENTITY_MAX_LEN 64
 
 /**
  * @brief Verifies if a client certificate matches a known subject.
@@ -33,5 +35,11 @@ typedef struct {
 void load_cert_policy_from_env(CertPolicyConfig *config);
 
 int verify_cert_callback(int preverify_ok, X509_STORE_CTX *ctx);
+
+// PSK
+void load_psk_policy_from_env(void);
+unsigned int psk_server_callback(SSL *ssl, const char *identity, unsigned char *psk, unsigned int max_psk_len);
+ErrorCode is_psk_client_allowed(SSL *ssl);
+void init_psk_identity_index();
 
 #endif // CLIENTS_H

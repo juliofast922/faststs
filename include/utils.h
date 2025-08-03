@@ -50,4 +50,6 @@ int get_env_from_file(const char *filename, const char *key, char *out, size_t o
  */
 int match_form_param(const char *body, const char *key, char *out, size_t out_size);
 
+int hexstr_to_bytes(const char *hex, unsigned char *out, size_t *out_len);
+
 #endif // UTILS_H

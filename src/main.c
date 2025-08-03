@@ -28,6 +28,7 @@
 #include "api/routes/sts_dispatcher.h"
 
 #include <sys/resource.h>
+#include <signal.h>
 
 void bump_fd_limit() {
     struct rlimit lim = {10000, 10000};
@@ -35,6 +36,7 @@ void bump_fd_limit() {
 }
 
 int main() {
+    signal(SIGPIPE, SIG_IGN);
     bump_fd_limit();
     SSL_library_init();
     logger_init(".env");
@@ -66,7 +68,9 @@ int main() {
     }
 
     // Register routes
-    register_route("GET", "/", handle_root, AUTH_MTLS);
+    register_route("GET", "/", handle_root, AUTH_NONE);
+    register_route("GET", "/mtls", handle_root, AUTH_MTLS);
+    register_route("GET", "/pks", handle_root, AUTH_PSK);
     register_route("POST", "/sts", handle_sts_dispatcher, AUTH_MTLS);
 
     // Start server

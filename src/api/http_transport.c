@@ -1,3 +1,5 @@
+// src/api/http_transport.c
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -131,10 +133,14 @@ static ErrorCode http_accept_loop(SSL_CTX *ctx) {
             if (bytes <= 0) {
                 int err = SSL_get_error(ssl, bytes);
                 if (err == SSL_ERROR_ZERO_RETURN) {
-                    log_debug("SSL connection closed by peer");
+                    log_debug("SSL connection closed cleanly by peer");
+                } else if (err == SSL_ERROR_SYSCALL && bytes == 0) {
+                    log_debug("Client closed connection (EOF without shutdown)");
+                } else if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE) {
+                    log_debug("SSL_read() would block — retrying");
+                    continue;
                 } else {
-                    log_error("SSL_read() failed");
-                    ERR_print_errors_fp(stderr);
+                    log_warn("SSL_read() failed, assuming client disconnect");
                 }
                 break;
             }
