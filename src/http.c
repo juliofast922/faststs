@@ -31,6 +31,53 @@ ErrorCode http_execute(const HttpRequest *req, HttpResponse *res) {
         return ERROR_HTTP_INVALID_INPUT;
     }
 
+    // Handle PSK manually via openssl s_client if requested
+    if (req->psk_identity && req->psk_key_hex) {
+        log_debug("Executing PSK request using openssl s_client");
+
+        char cmd[512];
+        snprintf(cmd, sizeof(cmd),
+                 "openssl s_client -psk_identity %s -psk %s -connect %s -quiet",
+                 req->psk_identity, req->psk_key_hex, strstr(req->url, "localhost") ? "localhost:8443" : req->url);
+
+        FILE *fp = popen(cmd, "w+");
+        if (!fp) {
+            log_error("Failed to spawn openssl s_client");
+            return ERROR_HTTP_INIT_FAILED;
+        }
+
+        const char *req_str =
+            "GET /pks HTTP/1.1\r\n"
+            "Host: localhost\r\n"
+            "Connection: close\r\n\r\n";
+        fwrite(req_str, 1, strlen(req_str), fp);
+        fflush(fp);
+
+        char buffer[4096];
+        size_t total_len = 0;
+
+        res->body = calloc(1, 1);
+        while (fgets(buffer, sizeof(buffer), fp)) {
+            size_t len = strlen(buffer);
+            res->body = realloc(res->body, total_len + len + 1);
+            memcpy(res->body + total_len, buffer, len);
+            total_len += len;
+            res->body[total_len] = '\0';
+        }
+        res->body_len = total_len;
+
+        pclose(fp);
+
+        // Simple status detection
+        if (strstr(res->body, "HTTP/1.1 200 OK")) {
+            res->status_code = 200;
+            return ERROR_NONE;
+        } else {
+            res->status_code = 403;
+            return ERROR_HTTP_CURL;
+        }
+    }
+
     ErrorCode final_err = ERROR_UNKNOWN;
 
     for (int attempt = 1; attempt <= MAX_RETRIES; ++attempt) {

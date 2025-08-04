@@ -19,9 +19,8 @@ typedef struct {
  *   2. If not found or not provided, it falls back to getenv().
  *
  * @param creds     Pointer to the AwsCredentials struct to populate.
- * @param env_path  Optional path to a .env file.
  * @return ErrorCode indicating success or failure.
  */
-ErrorCode load_credentials(AwsCredentials *creds, const char *env_path);
+ErrorCode load_credentials(AwsCredentials *creds);
 
 #endif // AWS_CREDENTIALS_H

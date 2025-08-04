@@ -20,4 +20,7 @@ jobs:
       run: bash scripts/gen-test-certs.sh
 
     - name: Run tests with Makefile
-      run: make test
+      run: |
+        echo "PSK_ALLOW_IDENTITY=client-x" >> .env
+        echo "PSK_KEY_client-x=68656c6c6f736563726574" >> .env
+        make test

@@ -92,6 +92,11 @@ void handle_request(SSL *ssl, const char *raw_request) {
                     }
                     break;
                 }
+                
+                case AUTH_PSK: {
+                    auth_result = is_psk_client_allowed(ssl);
+                    break;
+                }
 
                 default:
                     log_error("Unknown auth policy for route %s %s", method, path);

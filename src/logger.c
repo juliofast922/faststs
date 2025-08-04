@@ -66,15 +66,7 @@ static LogLevel string_to_level(const char *lvl) {
     return LOG_INFO;
 }
 
-void logger_init(const char *env_path) {
-    char buffer[64];
-
-    if (env_path) {
-        if (get_env_from_file(env_path, "LOG_LEVEL", buffer, sizeof(buffer))) {
-            current_level = string_to_level(buffer);
-            return;
-        }
-    }
+void logger_init() {
 
     const char *env = get_env_str("LOG_LEVEL");
     if (env) {

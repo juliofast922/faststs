@@ -38,6 +38,10 @@ const char* error_to_string(ErrorCode code) {
             return "TLS read failed";
         case ERROR_SSL_WRITE_FAILED:
             return "TLS write failed";
+        case ERROR_SSL_CTX:
+            return "Failed to create SSL_CTX";
+        case ERROR_INVALID_ARGUMENT:
+            return "Invalid argument";
         case ERROR_UNKNOWN:
         default:
             return "Unknown error";

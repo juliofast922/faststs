@@ -1,3 +1,5 @@
+// src/api/http_transport.c
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,6 +9,7 @@
 #include <sys/socket.h>
 #include <openssl/err.h>
 #include <stdatomic.h>
+#include <limits.h>
 
 #include "error.h"
 #include "logger.h"
@@ -14,7 +17,7 @@
 #include "api/ssl.h"
 #include "api/router.h"
 
-#define MAX_CLIENTS 10
+#define MAX_CLIENTS 100
 #define READ_BUF_SIZE 4096
 #define READ_TIMEOUT_SEC 15
 
@@ -58,7 +61,7 @@ static ErrorCode create_server_socket(int port, int *out_fd) {
         return ERROR_SOCKET_BIND_FAILED;
     }
 
-    if (listen(sockfd, MAX_CLIENTS) < 0) {
+    if (listen(sockfd, SOMAXCONN) < 0) {
         log_error("listen() failed");
         close(sockfd);
         return ERROR_SOCKET_LISTEN_FAILED;
@@ -130,10 +133,14 @@ static ErrorCode http_accept_loop(SSL_CTX *ctx) {
             if (bytes <= 0) {
                 int err = SSL_get_error(ssl, bytes);
                 if (err == SSL_ERROR_ZERO_RETURN) {
-                    log_debug("SSL connection closed by peer");
+                    log_debug("SSL connection closed cleanly by peer");
+                } else if (err == SSL_ERROR_SYSCALL && bytes == 0) {
+                    log_debug("Client closed connection (EOF without shutdown)");
+                } else if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE) {
+                    log_debug("SSL_read() would block — retrying");
+                    continue;
                 } else {
-                    log_error("SSL_read() failed");
-                    ERR_print_errors_fp(stderr);
+                    log_warn("SSL_read() failed, assuming client disconnect");
                 }
                 break;
             }
@@ -146,12 +153,6 @@ static ErrorCode http_accept_loop(SSL_CTX *ctx) {
             }
 
             handle_request(ssl, buf);
-        }
-
-        int *flag = SSL_get_ex_data(ssl, SSL_EX_AUTHORIZED_IDX);
-        if (flag) {
-            SSL_set_ex_data(ssl, SSL_EX_AUTHORIZED_IDX, NULL);
-            free(flag);
         }
 
         SSL_shutdown(ssl);

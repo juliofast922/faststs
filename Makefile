@@ -17,7 +17,7 @@ all: run
 run: $(SRC_DIR)/main.c $(SRC)
 	@mkdir -p bin
 	$(CC) $(CFLAGS) -o $(BIN) $(SRC_DIR)/main.c $(SRC) $(LDLIBS)
-	@$(BIN)
+	-@$(BIN) || echo "Exited with non-zero status (ignored)"
 
 # Run all tests
 test: $(TEST_FILES)

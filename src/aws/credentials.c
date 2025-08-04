@@ -6,41 +6,23 @@
 #include <stdio.h>
 
 
-ErrorCode load_credentials(AwsCredentials *creds, const char *env_path) {
+ErrorCode load_credentials(AwsCredentials *creds) {
     if (!creds) return ERROR_CREDENTIALS_NOT_FOUND;
 
-    char access_key[64] = {0};
-    char secret_key[128] = {0};
+    const char *env_access = get_env_str("ACCESS_KEY_ID");
+    const char *env_secret = get_env_str("SECRET_ACCESS_KEY");
 
-    int found = 0;
-
-    if (env_path) {
-        found += get_env_from_file(env_path, "ACCESS_KEY_ID", access_key, sizeof(access_key));
-        found += get_env_from_file(env_path, "SECRET_ACCESS_KEY", secret_key, sizeof(secret_key));
-
-        log_debug("Trying to load credentials from file: %s", env_path);
+    if (!env_access || !env_secret || !*env_access || !*env_secret) {
+        log_error("Missing ACCESS_KEY_ID or SECRET_ACCESS_KEY in environment");
+        return ERROR_CREDENTIALS_NOT_FOUND;
     }
 
-    if (!found || access_key[0] == '\0' || secret_key[0] == '\0') {
-        log_debug("Fallback to environment variables");
+    strncpy(creds->access_key, env_access, sizeof(creds->access_key) - 1);
+    creds->access_key[sizeof(creds->access_key) - 1] = '\0';
 
-        const char *env_access = get_env_str("ACCESS_KEY_ID");
-        const char *env_secret = get_env_str("SECRET_ACCESS_KEY");
+    strncpy(creds->secret_key, env_secret, sizeof(creds->secret_key) - 1);
+    creds->secret_key[sizeof(creds->secret_key) - 1] = '\0';
 
-        if (env_access) {
-            strncpy(access_key, env_access, sizeof(access_key) - 1);
-        }
-        if (env_secret) {
-            strncpy(secret_key, env_secret, sizeof(secret_key) - 1);
-        }
-    }
-
-    if (access_key[0] != '\0' && secret_key[0] != '\0') {
-        strncpy(creds->access_key, access_key, sizeof(creds->access_key) - 1);
-        strncpy(creds->secret_key, secret_key, sizeof(creds->secret_key) - 1);
-        return ERROR_NONE;
-    }
-
-    log_error("Failed to load AWS credentials from file or environment");
-    return ERROR_CREDENTIALS_NOT_FOUND;
+    log_debug("Loaded AWS credentials from environment");
+    return ERROR_NONE;
 }

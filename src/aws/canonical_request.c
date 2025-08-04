@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include "logger.h"
+#include "error.h"
 #include "aws/canonical_request.h"
 
 ErrorCode canonical_request_build(

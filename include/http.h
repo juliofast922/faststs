@@ -28,6 +28,10 @@ typedef struct {
     const char *cert_path;
     const char *key_path;
     const char *ca_path;
+    
+    // PSK auth 
+    const char *psk_identity;
+    const char *psk_key_hex;
 } HttpRequest;
 
 /**

@@ -3,6 +3,7 @@
 #include <time.h>
 #include "http.h"
 #include "test_utils.h"
+#include "logger.h"
 #include "error.h"
 
 static long elapsed_ms(struct timespec start, struct timespec end) {
@@ -36,12 +37,12 @@ int test_http_get_ok(void) {
                  res.body && strstr(res.body, "\"foo\": \"bar\"");
 
     if (!passed) {
-        printf("HTTP Response code: %ld\n", res.status_code);
-        if (res.body) printf("HTTP Body:\n%s\n", res.body);
+        log_debug("HTTP Response code: %ld\n", res.status_code);
+        if (res.body) log_info("HTTP Body:\n%s\n", res.body);
     }
 
     print_test_result("test_http_get_ok", passed, err);
-    printf("[timing] GET took %ld ms\n", ms);
+    log_info("[timing] GET took %ld ms\n", ms);
     http_response_free(&res);
     return passed ? 0 : 1;
 }
@@ -70,7 +71,7 @@ int test_http_invalid_url(void) {
 
     int passed = err == ERROR_HTTP_CURL;
     print_test_result("test_http_invalid_url", passed, err);
-    printf("[timing] INVALID URL took %ld ms\n", ms);
+    log_info("[timing] INVALID URL took %ld ms\n", ms);
     http_response_free(&res);
     return passed ? 0 : 1;
 }
@@ -110,12 +111,12 @@ int test_http_post_with_body(void) {
                 strstr(res.body, "\"x-custom-header\": \"MyValue\"");
 
     if (!passed) {
-        printf("HTTP Response code: %ld\n", res.status_code);
-        if (res.body) printf("HTTP Body:\n%s\n", res.body);
+        log_error("HTTP Response code: %ld\n", res.status_code);
+        if (res.body) log_error("HTTP Body:\n%s\n", res.body);
     }
 
     print_test_result("test_http_post_with_body", passed, err);
-    printf("[timing] POST took %ld ms\n", ms);
+    log_info("[timing] POST took %ld ms\n", ms);
     http_response_free(&res);
     return passed ? 0 : 1;
 }
