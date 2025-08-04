@@ -22,5 +22,5 @@ jobs:
     - name: Run tests with Makefile
       run: |
         export PSK_ALLOW_IDENTITY=client-x
-        export PSK_KEY_client_x=68656c6c6f736563726574
+        export PSK_KEY_client-x=68656c6c6f736563726574
         make test
