@@ -29,67 +29,45 @@ typedef struct {
 static PskEntry allowed_psks[MAX_PSK_ENTRIES];
 static int allowed_psk_count = 0;
 
-static void load_env_list(const char *env_key, char *list, size_t entry_size, int *count, int max_entries) {
-    const char *val = get_env_str(env_key);
-    if (!val) return;
-
-    char buf[1024];
-    strncpy(buf, val, sizeof(buf) - 1);
-    buf[sizeof(buf) - 1] = '\0';
-
-    char *token = strtok(buf, ",");
-    while (token && *count < max_entries) {
-        while (*token == ' ') token++;  // trim
-        char *entry_ptr = list + (*count) * entry_size;
-        strncpy(entry_ptr, token, entry_size - 1);
-        entry_ptr[entry_size - 1] = '\0';
-        (*count)++;
-        token = strtok(NULL, ",");
-    }
-}
-
 void load_cert_policy_from_env(CertPolicyConfig *config) {
-    config->cn_count = config->ou_count = config->o_count = config->issuer_cn_count = config->san_count = 0;
-
-    load_env_list("MTLS_ALLOW_CN", (char *)config->allowed_cn, 128, &config->cn_count, MAX_POLICY_ENTRIES);
-    load_env_list("MTLS_ALLOW_OU", (char *)config->allowed_ou, 128, &config->ou_count, MAX_POLICY_ENTRIES);
-    load_env_list("MTLS_ALLOW_O", (char *)config->allowed_o, 128, &config->o_count, MAX_POLICY_ENTRIES);
-    load_env_list("MTLS_ALLOW_ISSUER_CN", (char *)config->allowed_issuer_cn, 128, &config->issuer_cn_count, MAX_POLICY_ENTRIES);
-    load_env_list("MTLS_ALLOW_SAN", (char *)config->allowed_san, 256, &config->san_count, MAX_POLICY_ENTRIES);
+    config->cn_count = get_env_list("MTLS_ALLOW_CN", (char *)config->allowed_cn, MAX_POLICY_ENTRIES, sizeof(config->allowed_cn[0]));
+    config->ou_count = get_env_list("MTLS_ALLOW_OU", (char *)config->allowed_ou, MAX_POLICY_ENTRIES, sizeof(config->allowed_ou[0]));
+    config->o_count  = get_env_list("MTLS_ALLOW_O",  (char *)config->allowed_o,  MAX_POLICY_ENTRIES, sizeof(config->allowed_o[0]));
+    config->issuer_cn_count = get_env_list("MTLS_ALLOW_ISSUER_CN", (char *)config->allowed_issuer_cn, MAX_POLICY_ENTRIES, sizeof(config->allowed_issuer_cn[0]));
+    config->san_count = get_env_list("MTLS_ALLOW_SAN", (char *)config->allowed_san, MAX_POLICY_ENTRIES, sizeof(config->allowed_san[0]));
 }
 
 void load_psk_policy_from_env(void) {
     allowed_psk_count = 0;
 
-    char identity_list_buf[1024];
-    if (!get_env_from_file(".env", "PSK_ALLOW_IDENTITY", identity_list_buf, sizeof(identity_list_buf))) {
-        log_warn("PSK_ALLOW_IDENTITY not set in .env");
+    char identities[MAX_PSK_ENTRIES][PSK_IDENTITY_MAX_LEN];
+    int count = get_env_list("PSK_ALLOW_IDENTITY", (char *)identities, MAX_PSK_ENTRIES, sizeof(identities[0]));
+
+    if (count <= 0) {
+        log_warn("PSK_ALLOW_IDENTITY not set or empty");
         return;
     }
 
-    log_debug("Loaded PSK_ALLOW_IDENTITY: %s", identity_list_buf);
-
-    char *token = strtok(identity_list_buf, ",");
-    while (token && allowed_psk_count < MAX_PSK_ENTRIES) {
-        while (*token == ' ') token++;  // Trim leading space
-
-        strncpy(allowed_psks[allowed_psk_count].identity, token, PSK_IDENTITY_MAX_LEN - 1);
+    for (int i = 0; i < count; ++i) {
+        strncpy(allowed_psks[allowed_psk_count].identity, identities[i], PSK_IDENTITY_MAX_LEN - 1);
         allowed_psks[allowed_psk_count].identity[PSK_IDENTITY_MAX_LEN - 1] = '\0';
 
         char env_key[256];
-        snprintf(env_key, sizeof(env_key), "PSK_KEY_%s", token);
+        snprintf(env_key, sizeof(env_key), "PSK_KEY_%s", identities[i]);
 
-        char key_hex[128];
-        if (!get_env_from_file(".env", env_key, key_hex, sizeof(key_hex))) {
-            log_warn("Missing %s in .env", env_key);
-        } else if (hexstr_to_bytes(key_hex, allowed_psks[allowed_psk_count].key, &allowed_psks[allowed_psk_count].key_len) != 0) {
-            log_warn("Invalid hex key for identity: %s", token);
-        } else {
-            log_debug("Loaded PSK identity: %s with key (hex): %s", token, key_hex);
-            allowed_psk_count++;
+        const char *key_hex = get_env_str(env_key);
+        if (!key_hex) {
+            log_warn("Missing %s in environment", env_key);
+            continue;
         }
 
-        token = strtok(NULL, ",");
+        if (hexstr_to_bytes(key_hex, allowed_psks[allowed_psk_count].key, &allowed_psks[allowed_psk_count].key_len) != 0) {
+            log_warn("Invalid hex key for identity: %s", identities[i]);
+            continue;
+        }
+
+        log_debug("Loaded PSK identity: %s with key (hex): %s", identities[i], key_hex);
+        allowed_psk_count++;
     }
 }
 

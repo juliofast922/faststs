@@ -1,8 +1,11 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 #include "utils.h"
+
+#define MAX_LINE_LEN 512
 
 void extract_tag_text(const char *xml, const char *tag, char *out, size_t out_size) {
     char open_tag[64], close_tag[64];
@@ -27,28 +30,80 @@ const char *get_env_str(const char *key) {
     return getenv(key);
 }
 
-int get_env_from_file(const char *filename, const char *key, char *out, size_t out_size) {
-    if (!filename || !key || !out || out_size == 0) return 0;
+// Helper: trim leading/trailing whitespace (in-place)
+static void trim_whitespace(char *str) {
+    char *end;
+
+    while (isspace((unsigned char)*str)) str++;
+    if (*str == 0) return;
+
+    end = str + strlen(str) - 1;
+    while (end > str && isspace((unsigned char)*end)) end--;
+    *(end + 1) = '\0';
+}
+
+/**
+ * Load .env file into process environment (override system vars)
+ */
+int load_env_file(const char *filename) {
+    if (!filename) return 0;
 
     FILE *file = fopen(filename, "r");
     if (!file) return 0;
 
-    char line[256];
-    size_t key_len = strlen(key);
-
+    char line[MAX_LINE_LEN];
     while (fgets(line, sizeof(line), file)) {
-        if (strncmp(line, key, key_len) == 0 && line[key_len] == '=') {
-            char *value = line + key_len + 1;
-            value[strcspn(value, "\r\n")] = '\0';  // Strip newline
-            strncpy(out, value, out_size);
-            out[out_size - 1] = '\0';
-            fclose(file);
-            return 1;
+        // Skip empty lines and comments
+        char *start = line;
+        while (*start == ' ' || *start == '\t') start++;
+        if (*start == '#' || *start == '\n' || *start == '\0') continue;
+
+        // Strip newline
+        start[strcspn(start, "\r\n")] = '\0';
+
+        char *equal = strchr(start, '=');
+        if (!equal) continue;
+
+        *equal = '\0';
+        char *key = start;
+        char *value = equal + 1;
+
+        trim_whitespace(key);
+        trim_whitespace(value);
+
+        if (*key && *value) {
+            setenv(key, value, 1);  // override existing
         }
     }
 
     fclose(file);
-    return 0;
+    return 1;
+}
+
+/**
+ * Get env var as a trimmed list split by comma
+ */
+int get_env_list(const char *key, char *out, size_t max_items, size_t item_len) {
+    const char *env_val = getenv(key);
+    if (!env_val) return -1;
+
+    char *copy = strdup(env_val);
+    if (!copy) return -1;
+
+    size_t count = 0;
+    char *token = strtok(copy, ",");
+
+    while (token && count < max_items) {
+        trim_whitespace(token);
+        char *dest = out + (count * item_len);
+        strncpy(dest, token, item_len - 1);
+        dest[item_len - 1] = '\0';
+        count++;
+        token = strtok(NULL, ",");
+    }
+
+    free(copy);
+    return (int)count;
 }
 
 int match_form_param(const char *body, const char *key, char *out, size_t out_size) {

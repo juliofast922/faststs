@@ -8,9 +8,11 @@
 #include "api/ssl.h"
 #include "api/router.h"
 #include "api/routes/base.h"
+#include "api/clients.h"
 #include "http.h"
 #include "error.h"
 #include "logger.h"
+#include "utils.h"
 #include "test_utils.h"
 
 // === SERVER THREAD ===
@@ -88,6 +90,11 @@ int test_tls_hello_world(void) {
 }
 
 int test_psk_hello_world(void) {
+    if (!load_env_file(".env")) {
+        log_warn("Could not load .env file — relying on existing environment variables");
+    }
+    load_psk_policy_from_env();
+
     const int port = 9444;
 
     // Setup PSK context
@@ -103,7 +110,7 @@ int test_psk_hello_world(void) {
     }
 
     // Register route
-    register_route("GET", "/pks", handle_root, AUTH_PSK);
+    register_route("GET", "/psk", handle_root, AUTH_PSK);
 
     // Start server
     pthread_t server_thread;
@@ -113,7 +120,7 @@ int test_psk_hello_world(void) {
     sleep(1);
 
     FILE *fp = popen(
-        "printf 'GET /pks HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' | "
+        "printf 'GET /psk HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' | "
         "/usr/bin/openssl s_client -psk_identity client-x -psk 68656c6c6f736563726574 "
         "-connect localhost:9444 -servername localhost -quiet",
         "r");
@@ -127,7 +134,7 @@ int test_psk_hello_world(void) {
         return 1;
     }
     
-    const char *req = "GET /pks HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n";
+    const char *req = "GET /psk HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n";
     fwrite(req, 1, strlen(req), fp);
     fflush(fp);
     

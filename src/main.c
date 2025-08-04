@@ -39,24 +39,29 @@ int main() {
     signal(SIGPIPE, SIG_IGN);
     bump_fd_limit();
     SSL_library_init();
+
+    // Load environment variables from .env (if present)
+    if (!load_env_file(".env")) {
+        log_warn("Could not load .env file — relying on existing environment variables");
+    }
+
     logger_init(".env");
     //logger_set_file_logging(1, 300); <- Set Log file
 
+    
     log_debug("Starting fastgate API...");
 
-    // Load port from .env or ENV
+    // Load port from environment (with fallback)
     int port = 8443; // default fallback
-    char port_buf[16];
+    const char *port_str = get_env_str("HTTP_PORT");
 
-    if (get_env_from_file(".env", "HTTP_PORT", port_buf, sizeof(port_buf)) ||
-        (get_env_str("HTTP_PORT") && strncpy(port_buf, get_env_str("HTTP_PORT"), sizeof(port_buf)))) {
-        port_buf[sizeof(port_buf) - 1] = '\0';
-        port = atoi(port_buf);
+    if (port_str) {
+        port = atoi(port_str);
         if (port <= 0 || port > 65535) {
-            log_warn("Invalid PORT specified: %s — using default 8443", port_buf);
+            log_warn("Invalid PORT specified: %s — using default 8443", port_str);
             port = 8443;
         } else {
-            log_debug("Loaded port from env: %d", port);
+            log_debug("Loaded port from environment: %d", port);
         }
     }
 
@@ -70,7 +75,7 @@ int main() {
     // Register routes
     register_route("GET", "/", handle_root, AUTH_NONE);
     register_route("GET", "/mtls", handle_root, AUTH_MTLS);
-    register_route("GET", "/pks", handle_root, AUTH_PSK);
+    register_route("GET", "/psk", handle_root, AUTH_PSK);
     register_route("POST", "/sts", handle_sts_dispatcher, AUTH_MTLS);
 
     // Start server

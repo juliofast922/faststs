@@ -14,11 +14,9 @@ typedef enum {
 /**
  * @brief Initializes the logger using environment configuration.
  *
- * Currently reads LOG_LEVEL from the specified .env file.
- *
- * @param env_path Path to the .env file (e.g., ".env")
+ * Currently reads LOG_LEVEL from the specified enviroment.
  */
-void logger_init(const char *env_path);
+void logger_init();
 
 /**
  * @brief Enables optional file logging with time-based rotation.

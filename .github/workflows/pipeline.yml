@@ -8,6 +8,9 @@ jobs:
   build-and-test:
     name: Build and Test
     runs-on: ubuntu-latest
+    env:
+      PSK_ALLOW_IDENTITY: client-x
+      PSK_KEY_client-x: 68656c6c6f736563726574
 
     steps:
     - name: Checkout code
