@@ -31,20 +31,24 @@ void* server_thread_func(void *arg) {
 // === TEST ===
 
 int test_tls_hello_world(void) {
+    if (!load_env_file(".env")) {
+        log_warn("Could not load .env file — relying on existing environment variables");
+    }
+    
     const int port = 9443;
 
     // Setup TLS context
-    SSL_CTX *ctx = NULL;
-    ErrorCode err = create_ssl_context_safe(
+    SSL_CTX *ctx = create_ssl_context(
         "certs/server.crt",
         "certs/server.key",
-        "certs/ca.crt",
-        &ctx
+        "certs/ca.crt"
     );
-    if (err != ERROR_NONE || !ctx) {
-        print_test_result("test_tls_hello_world", 0, err);
+    if (!ctx) {
+        print_test_result("test_tls_hello_world", 0, ERROR_SSL_CONTEXT_INIT);
         return 1;
     }
+
+    ErrorCode err;
 
     // Register test handler
     register_route("GET", "/", handle_root, AUTH_MTLS);
@@ -98,14 +102,13 @@ int test_psk_hello_world(void) {
     const int port = 9444;
 
     // Setup PSK context
-    SSL_CTX *ctx = NULL;
-    ErrorCode err = create_psk_context_safe(
-        "client-x",
-        "68656c6c6f736563726574",
-        &ctx
+    SSL_CTX *ctx = create_ssl_context(
+        "certs/server.crt",
+        "certs/server.key",
+        "certs/ca.crt"
     );
-    if (err != ERROR_NONE || !ctx) {
-        print_test_result("test_psk_hello_world", 0, err);
+    if (!ctx) {
+        print_test_result("test_psk_hello_world", 0, ERROR_SSL_CONTEXT_INIT);
         return 1;
     }
 

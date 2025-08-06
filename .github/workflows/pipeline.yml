@@ -21,6 +21,6 @@ jobs:
 
     - name: Run tests with Makefile
       run: |
-        echo "PSK_ALLOW_IDENTITY=client-x" >> .env
-        echo "PSK_KEY_client-x=68656c6c6f736563726574" >> .env
+        echo "ACCESS_KEY_ID=EXAMPLETY6TGTQXUZGEEA" >> .env
+        echo "SECRET_ACCESS_KEY=example_secretM6PPixHHN7RjufJlLr7rMzswxsc" >> .env
         make test

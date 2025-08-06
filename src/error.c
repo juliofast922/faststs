@@ -42,6 +42,16 @@ const char* error_to_string(ErrorCode code) {
             return "Failed to create SSL_CTX";
         case ERROR_INVALID_ARGUMENT:
             return "Invalid argument";
+        case ERROR_INVALID_CLIENT_TOKEN_ID:
+            return "Invalid client Id";
+        case ERROR_SIGV4_INVALID_FORMAT:
+            return "Invalid SignV4 format";
+        case ERROR_MEMORY_ALLOCATION:
+            return "Memory allocation Error";
+        case ERROR_SSL_CONTEXT_INIT:
+            return "SSL context initialization Error";
+        case ERROR_SSL_CERTIFICATE_LOAD:
+            return "SSL certificate load Error";
         case ERROR_UNKNOWN:
         default:
             return "Unknown error";

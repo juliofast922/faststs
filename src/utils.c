@@ -136,3 +136,23 @@ int hexstr_to_bytes(const char *hex, unsigned char *out, size_t *out_len) {
     }
     return 0;
 }
+
+int match_header_param(const char *request, const char *key, char *out, size_t out_size) {
+    // Very naive parsing for "Key: Value\r\n" style headers
+    const char *start = strstr(request, key);
+    if (!start) return 0;
+
+    const char *colon = strchr(start, ':');
+    if (!colon || colon[1] != ' ') return 0;
+
+    const char *value_start = colon + 2;
+    const char *end = strstr(value_start, "\r\n");
+    if (!end) return 0;
+
+    size_t len = end - value_start;
+    if (len >= out_size) return 0;
+
+    strncpy(out, value_start, len);
+    out[len] = '\0';
+    return 1;
+}

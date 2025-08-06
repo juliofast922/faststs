@@ -10,7 +10,11 @@
  * @brief Represents a fully constructed AWS SigV4 Authorization header.
  */
 typedef struct {
-    char value[1024]; ///< Full header string: "AWS4-HMAC-SHA256 Credential=..., SignedHeaders=..., Signature=..."
+    char value[1024];          // Full header string (as received or built)
+    char access_key_id[128];   // From Credential=
+    char scope[256];           // From Credential=.../<scope>
+    char signed_headers[256];  // SignedHeaders=...
+    char signature[65];        // Signature=...
 } AuthorizationHeader;
 
 /**
@@ -40,6 +44,8 @@ ErrorCode authorization_header_build(
  */
 const char *authorization_header_str(const AuthorizationHeader *header);
 
+// === Crypto Helpers ===
+
 /**
  * @brief Computes SHA256 hash of a string and outputs as hex string.
  *
@@ -57,5 +63,33 @@ void sha256_hex(const char *data, char *out_hex);
  * @param out     Output: 32-byte binary digest.
  */
 void hmac_sha256(const unsigned char *key, int key_len, const char *msg, unsigned char *out);
+
+// === Incoming Header Parser ===
+
+/**
+ * @brief Parses a SigV4 Authorization header string into structured components.
+ *
+ * @param header_str  Raw Authorization header string.
+ * @param out_header  Output structure to populate.
+ * @return ErrorCode indicating parse success/failure.
+ */
+ErrorCode authorization_header_parse(const char *header_str, AuthorizationHeader *out_header);
+
+/**
+ * @brief Validates access key format and signature format inside header.
+ *
+ * @param header Parsed AuthorizationHeader to validate.
+ * @return ErrorCode if validation fails or is malformed.
+ */
+ErrorCode validate_authorization_credentials(const AuthorizationHeader *header);
+
+/**
+ * @brief Converts binary data to lowercase hexadecimal string.
+ *
+ * @param bytes     Input binary buffer.
+ * @param len       Number of bytes to convert.
+ * @param out_hex   Output buffer (must be at least len*2+1).
+ */
+void bytes_to_hex(const unsigned char *bytes, size_t len, char *out_hex);
 
 #endif // AWS_SIGV4_H

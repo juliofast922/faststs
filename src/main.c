@@ -40,62 +40,59 @@ int main() {
     bump_fd_limit();
     SSL_library_init();
 
-    // Load environment variables from .env (if present)
+    // Load environment variables from .env (if available)
     if (!load_env_file(".env")) {
         log_warn("Could not load .env file — relying on existing environment variables");
     }
 
-    logger_init(".env");
-    //logger_set_file_logging(1, 300); <- Set Log file
+    logger_init();
+    // logger_set_file_logging(1, 300); // Optional: enable file logging
 
-    
     log_debug("Starting fastgate API...");
 
-    // Load port from environment (with fallback)
-    int port = 8443; // default fallback
+    // Load port from environment (default fallback: 8443)
+    int port = 8443;
     const char *port_str = get_env_str("HTTP_PORT");
 
     if (port_str) {
-        port = atoi(port_str);
-        if (port <= 0 || port > 65535) {
-            log_warn("Invalid PORT specified: %s — using default 8443", port_str);
-            port = 8443;
-        } else {
+        int env_port = atoi(port_str);
+        if (env_port > 0 && env_port <= 65535) {
+            port = env_port;
             log_debug("Loaded port from environment: %d", port);
+        } else {
+            log_warn("Invalid HTTP_PORT value: %s — using default 8443", port_str);
         }
     }
 
-    SSL_CTX *ctx = NULL;
-    ErrorCode err = create_ssl_context_safe("certs/server.crt", "certs/server.key", "certs/ca.crt", &ctx);
-    if (err != ERROR_NONE) {
-        log_error("Failed to initialize SSL context: %s", error_to_string(err));
+    SSL_CTX *ctx = create_ssl_context(
+        "certs/server.crt",
+        "certs/server.key",
+        "certs/ca.crt"
+    );
+
+    if (!ctx) {
+        log_error("Failed to initialize SSL context");
         return 1;
     }
 
-    // Register routes
-    register_route("GET", "/", handle_root, AUTH_NONE);
-    register_route("GET", "/mtls", handle_root, AUTH_MTLS);
-    register_route("GET", "/psk", handle_root, AUTH_PSK);
-    register_route("POST", "/sts", handle_sts_dispatcher, AUTH_MTLS);
+    // Register API routes
+    register_route("GET",  "/benchmark", handle_root,         AUTH_NONE);
+    register_route("GET",  "/mtls",      handle_root,         AUTH_MTLS);
+    register_route("GET",  "/psk",       handle_root,         AUTH_PSK);
+    register_route("POST", "/sts",       handle_sts_dispatcher, AUTH_MTLS);
 
-    // Start server
+    // Start server transport
     int server_fd;
-    err = http_transport.start(port, &server_fd);
-    if (err != ERROR_NONE) {
-        log_error("Failed to start server on port %d: %s", port, error_to_string(err));
-        SSL_CTX_free(ctx);
-        return 1;
-    }
+    http_transport.start(port, &server_fd);
 
     log_info("Server started successfully on port %d", port);
 
-    err = http_transport.accept_loop(ctx);
-    if (err != ERROR_NONE) {
-        log_error("Server accept loop failed: %s", error_to_string(err));
-        if (http_transport.stop) http_transport.stop();
+    http_transport.accept_loop(ctx);
+
+    if (http_transport.stop) {
+        http_transport.stop();
     }
 
-    if (http_transport.stop) http_transport.stop();
     SSL_CTX_free(ctx);
     return 0;
 }

@@ -1,5 +1,6 @@
 #include "error.h"
 #include "aws/credentials.h"
+#include "aws/aws_error.h"
 #include "utils.h"
 #include "logger.h"
 #include <string.h>
