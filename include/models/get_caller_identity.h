@@ -26,4 +26,6 @@ GetCallerIdentity get_caller_identity_create();
  */
 ErrorCode get_caller_identity_deserialize_xml(void *self, const char *xml);
 
+ErrorCode get_caller_identity_serialize_xml(const GetCallerIdentity *id, char *buf, size_t buf_len);
+
 #endif // GET_CALLER_IDENTITY_MODEL_H

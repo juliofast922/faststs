@@ -36,6 +36,7 @@ ErrorCode authorization_header_build(
     const char *region,
     const char *service,
     const char *canonical_request,
+    const char *signed_headers,
     AuthorizationHeader *out_header
 );
 

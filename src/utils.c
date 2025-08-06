@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <time.h>
 
 #include "utils.h"
 
@@ -155,4 +156,21 @@ int match_header_param(const char *request, const char *key, char *out, size_t o
     strncpy(out, value_start, len);
     out[len] = '\0';
     return 1;
+}
+
+const char *generate_request_id() {
+    static char req_id[64];
+    time_t t = time(NULL);
+    struct tm tm;
+    gmtime_r(&t, &tm);
+    snprintf(req_id, sizeof(req_id),
+             "%04d%02d%02d-%02d%02d%02d-stub",
+             tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
+             tm.tm_hour, tm.tm_min, tm.tm_sec);
+    return req_id;
+}
+
+void extract_aws_error_info(const char *xml, char *code_buf, size_t code_size, char *msg_buf, size_t msg_size) {
+    extract_tag_text(xml, "Code", code_buf, code_size);
+    extract_tag_text(xml, "Message", msg_buf, msg_size);
 }

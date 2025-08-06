@@ -86,4 +86,8 @@ int hexstr_to_bytes(const char *hex, unsigned char *out, size_t *out_len);
  */
 int match_header_param(const char *request, const char *key, char *out, size_t out_size);
 
+const char *generate_request_id();
+
+void extract_aws_error_info(const char *xml, char *code_buf, size_t code_size, char *msg_buf, size_t msg_size);
+
 #endif // UTILS_H
