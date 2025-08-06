@@ -4,13 +4,15 @@
 #include <openssl/hmac.h>
 #include <openssl/sha.h>
 
+#include "aws/aws_error.h"
+#include "aws/credentials.h"
 #include "error.h"
 #include "logger.h"
 #include "aws/sigv4.h"
 
 // === Helpers ===
 
-static void bytes_to_hex(const unsigned char *bytes, size_t len, char *out_hex) {
+void bytes_to_hex(const unsigned char *bytes, size_t len, char *out_hex) {
     for (size_t i = 0; i < len; ++i) {
         sprintf(out_hex + (i * 2), "%02x", bytes[i]);
     }
@@ -93,6 +95,9 @@ ErrorCode authorization_header_build(
     bytes_to_hex(signature_bin, SHA256_DIGEST_LENGTH, signature_hex);
     log_debug("Signature: %s", signature_hex);
 
+    strncpy(out_header->signature, signature_hex, sizeof(out_header->signature) - 1);
+    out_header->signature[sizeof(out_header->signature) - 1] = '\0';
+
     // Step 5: Build the authorization header
     snprintf(out_header->value, sizeof(out_header->value),
              "AWS4-HMAC-SHA256 Credential=%s/%s, SignedHeaders=host;x-amz-date, Signature=%s",
@@ -104,4 +109,79 @@ ErrorCode authorization_header_build(
 
 const char *authorization_header_str(const AuthorizationHeader *header) {
     return header ? header->value : "";
+}
+
+ErrorCode validate_authorization_credentials(const AuthorizationHeader *header) {
+    if (!header) return ERROR_SIGV4_INVALID_INPUT;
+
+    AwsCredentials creds;
+    ErrorCode err = load_credentials(&creds);
+    if (err != ERROR_NONE)
+        return ERROR_CREDENTIALS_NOT_FOUND;
+
+    if (strcmp(header->access_key_id, creds.access_key) != 0)
+        return ERROR_INVALID_CLIENT_TOKEN_ID;
+
+    return ERROR_NONE;
+}
+
+static int starts_with(const char *str, const char *prefix) {
+    return strncmp(str, prefix, strlen(prefix)) == 0;
+}
+
+ErrorCode authorization_header_parse(const char *header_str, AuthorizationHeader *out_header) {
+    if (!header_str || !out_header) return ERROR_SIGV4_INVALID_INPUT;
+
+    memset(out_header, 0, sizeof(*out_header));
+    strncpy(out_header->value, header_str, sizeof(out_header->value) - 1);
+
+    if (!starts_with(header_str, "AWS4-HMAC-SHA256 ")) {
+        return ERROR_SIGV4_INVALID_FORMAT;
+    }
+
+    const char *ptr = header_str + strlen("AWS4-HMAC-SHA256 ");
+
+    char *header_copy = strdup(ptr);
+    if (!header_copy) return ERROR_MEMORY_ALLOCATION;
+
+    char *token = strtok(header_copy, ",");
+    while (token) {
+        while (*token == ' ') token++;
+
+        if (starts_with(token, "Credential=")) {
+            const char *cred_val = token + strlen("Credential=");
+            char *slash = strchr(cred_val, '/');
+            if (!slash) {
+                free(header_copy);
+                return ERROR_SIGV4_INVALID_FORMAT;
+            }
+            size_t akid_len = slash - cred_val;
+            if (akid_len >= sizeof(out_header->access_key_id)) {
+                free(header_copy);
+                return ERROR_SIGV4_INVALID_FORMAT;
+            }
+            strncpy(out_header->access_key_id, cred_val, akid_len);
+            out_header->access_key_id[akid_len] = '\0';
+            strncpy(out_header->scope, slash + 1, sizeof(out_header->scope) - 1);
+
+        } else if (starts_with(token, "SignedHeaders=")) {
+            strncpy(out_header->signed_headers,
+                    token + strlen("SignedHeaders="),
+                    sizeof(out_header->signed_headers) - 1);
+        } else if (starts_with(token, "Signature=")) {
+            strncpy(out_header->signature,
+                    token + strlen("Signature="),
+                    sizeof(out_header->signature) - 1);
+        }
+
+        token = strtok(NULL, ",");
+    }
+
+    free(header_copy);
+
+    if (!out_header->access_key_id[0] || !out_header->signature[0]) {
+        return ERROR_SIGV4_INVALID_FORMAT;
+    }
+
+    return ERROR_NONE;
 }

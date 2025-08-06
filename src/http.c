@@ -111,8 +111,12 @@ ErrorCode http_execute(const HttpRequest *req, HttpResponse *res) {
             curl_easy_setopt(curl, CURLOPT_SSLCERT, req->cert_path);
             curl_easy_setopt(curl, CURLOPT_SSLKEY,  req->key_path);
         }
+        
         if (req->ca_path) {
             curl_easy_setopt(curl, CURLOPT_CAINFO, req->ca_path);
+        } else {
+            curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+            curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
         }
 
         for (int i = 0; req->headers && req->headers[i]; ++i) {

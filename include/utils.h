@@ -70,4 +70,20 @@ int match_form_param(const char *body, const char *key, char *out, size_t out_si
  */
 int hexstr_to_bytes(const char *hex, unsigned char *out, size_t *out_len);
 
+/**
+ * @brief Extracts the value of a header key from a raw HTTP request string.
+ *
+ * Header comparison is case-insensitive and trims surrounding whitespace.
+ *
+ * For example: given key = "Authorization", it will extract the corresponding value
+ * from a line like: "Authorization: Bearer abc123".
+ *
+ * @param request    Full raw HTTP request string.
+ * @param key        Header key to search (e.g., "Authorization").
+ * @param out        Output buffer to store the value.
+ * @param out_size   Size of the output buffer.
+ * @return 1 if key was found and value extracted, 0 otherwise.
+ */
+int match_header_param(const char *request, const char *key, char *out, size_t out_size);
+
 #endif // UTILS_H
