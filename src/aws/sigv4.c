@@ -61,9 +61,10 @@ ErrorCode authorization_header_build(
     const char *region,
     const char *service,
     const char *canonical_request,
+    const char *signed_headers,
     AuthorizationHeader *out_header
 ) {
-    if (!creds || !amz_date || !date || !region || !service || !canonical_request || !out_header)
+    if (!creds || !amz_date || !date || !region || !service || !canonical_request || !signed_headers || !out_header)
         return ERROR_SIGV4_INVALID_INPUT;
 
     log_debug("CanonicalRequest:\n%s", canonical_request);
@@ -100,8 +101,8 @@ ErrorCode authorization_header_build(
 
     // Step 5: Build the authorization header
     snprintf(out_header->value, sizeof(out_header->value),
-             "AWS4-HMAC-SHA256 Credential=%s/%s, SignedHeaders=host;x-amz-date, Signature=%s",
-             creds->access_key, scope, signature_hex);
+             "AWS4-HMAC-SHA256 Credential=%s/%s, SignedHeaders=%s, Signature=%s",
+             creds->access_key, scope, signed_headers, signature_hex);
 
     log_debug("AuthorizationHeader: %s", out_header->value);
     return ERROR_NONE;

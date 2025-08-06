@@ -28,8 +28,13 @@ typedef enum {
 int aws_error_to_http_status(AWSError error);
 
 /**
+ * Maps an AWS <Code> string to the corresponding AWSError enum.
+ */
+AWSError aws_error_from_code(const char *code_str);
+
+/**
  * Writes an AWS-style JSON error response to the SSL socket.
  */
-void respond_with_aws_error(SSL *ssl, AWSError error);
+void respond_with_aws_error(SSL *ssl, AWSError error, const char *custom_message);
 
 #endif // AWS_ERROR_H

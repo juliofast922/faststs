@@ -20,6 +20,7 @@ int test_sigv4_static_values(void) {
     const char *date     = "20150830";
     const char *region   = "us-east-1";
     const char *service  = "iam";
+    const char *signed_headers = "host;x-amz-date";
 
     // Note: no query string, empty payload => payload hash is e3b0c4…b855
     const char *canonical_request =
@@ -34,7 +35,7 @@ int test_sigv4_static_values(void) {
 
     AuthorizationHeader auth = {0};
     ErrorCode err = authorization_header_build(
-        &creds, amz_date, date, region, service, canonical_request, &auth
+        &creds, amz_date, date, region, service, canonical_request, signed_headers, &auth
     );
 
     // this is the correct signature for the above request:

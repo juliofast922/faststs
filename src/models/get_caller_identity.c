@@ -2,6 +2,7 @@
 #include <string.h>
 #include "utils.h"
 #include "logger.h"
+#include "error.h"
 #include "models/get_caller_identity.h"
 
 // Vtable for GetCallerIdentity implementing the Model interface
@@ -27,6 +28,40 @@ ErrorCode get_caller_identity_deserialize_xml(void *self, const char *xml) {
                       id->user_id, id->account, arn_buffer);
             return ERROR_DESERIALIZE_MISSING_FIELD;
         }
+    }
+
+    return ERROR_NONE;
+}
+
+
+ErrorCode get_caller_identity_serialize_xml(const GetCallerIdentity *id, char *buf, size_t buf_len) {
+    if (!id || !buf || buf_len == 0)
+        return ERROR_INVALID_ARGUMENT;
+
+    int written = snprintf(buf, buf_len,
+        "<GetCallerIdentityResponse xmlns=\"https://sts.amazonaws.com/doc/2011-06-15/\">\n"
+        "  <GetCallerIdentityResult>\n"
+        "    <UserId>%s</UserId>\n"
+        "    <Account>%s</Account>\n"
+        "    <Arn>%s</Arn>\n"
+        "  </GetCallerIdentityResult>\n"
+        "  <ResponseMetadata>\n"
+        "    <RequestId>%s</RequestId>\n"
+        "  </ResponseMetadata>\n"
+        "</GetCallerIdentityResponse>",
+        id->user_id,
+        id->account,
+        id->arn.value,
+        generate_request_id());
+
+    if (written < 0) {
+        log_error("Failed to serialize GetCallerIdentity");
+        return ERROR_UNKNOWN;
+    }
+
+    if ((size_t)written >= buf_len) {
+        log_error("Buffer too small to serialize GetCallerIdentity");
+        return ERROR_MEMORY_ALLOCATION;
     }
 
     return ERROR_NONE;
